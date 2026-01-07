@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IS115 Dashboard</title>
+    <title>IS115 Dashboard - SMU SCIS</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -25,17 +25,34 @@
         }
 
         header {
-            padding: 50px 20px 30px;
+            padding: 40px 20px 20px;
             text-align: center;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
+        /* Logo Container */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .logo-smu { height: 60px; width: auto; }
+        .logo-scis { height: 50px; width: auto; border-left: 1px solid rgba(255,255,255,0.3); padding-left: 30px; }
+
         h1 {
-            font-size: 2.5rem;
-            margin: 0;
+            font-size: 2.2rem;
+            margin: 10px 0 0 0;
             background: linear-gradient(90deg, #00d2ff, #3a7bd5);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: 2px;
+            text-transform: uppercase;
         }
 
         .category-title {
@@ -43,7 +60,7 @@
             max-width: 1100px;
             text-align: left;
             margin: 40px 0 20px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             text-transform: uppercase;
             letter-spacing: 4px;
             color: var(--accent);
@@ -67,7 +84,7 @@
             padding: 24px;
             text-decoration: none;
             color: inherit;
-            transition: all 0.3s ease;
+            transition: 0.3s ease;
             backdrop-filter: blur(12px);
             display: flex;
             flex-direction: column;
@@ -80,38 +97,28 @@
             box-shadow: 0 10px 30px rgba(0, 210, 255, 0.2);
         }
 
-        .card h3 {
-            margin: 0 0 8px 0;
-            font-size: 1.2rem;
-            color: #fff;
-        }
+        .card h3 { margin: 0 0 8px 0; font-size: 1.2rem; color: #fff; }
+        .card p { margin: 0; font-size: 0.85rem; line-height: 1.5; opacity: 0.6; }
+        .tag { margin-top: 15px; font-size: 0.7rem; font-weight: bold; color: var(--accent); letter-spacing: 1px; }
 
-        .card p {
-            margin: 0;
-            font-size: 0.85rem;
-            line-height: 1.5;
-            opacity: 0.6;
-        }
+        footer { margin-top: auto; padding: 30px; opacity: 0.4; font-size: 0.8rem; text-align: center; }
 
-        .tag {
-            margin-top: 15px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            color: var(--accent);
-            letter-spacing: 1px;
-        }
-
-        footer {
-            margin-top: auto;
-            padding: 30px;
-            opacity: 0.4;
-            font-size: 0.8rem;
+        @media (max-width: 600px) {
+            .logo-container { gap: 15px; flex-direction: column; }
+            .logo-scis { border-left: none; border-top: 1px solid rgba(255,255,255,0.3); padding-left: 0; padding-top: 15px; }
+            h1 { font-size: 1.8rem; }
         }
     </style>
 </head>
 <body>
 
 <header>
+    <div class="logo-container">
+        <img src="https://www.smu.edu.sg/themes/custom/smu/logo.svg" alt="SMU Logo" class="logo-smu">
+        <div class="logo-scis" style="color: white; font-weight: bold; font-size: 1.5rem; letter-spacing: 1px;">
+            SCIS <span style="font-weight: 200; font-size: 0.9rem; display: block; letter-spacing: 0;">School of Computing and Information Systems</span>
+        </div>
+    </div>
     <h1>IS115 TOOLBOX</h1>
 </header>
 
@@ -129,68 +136,23 @@
     </a>
 </div>
 
-
 <div class="category-title">Visualizers</div>
 <div class="grid">
-    <a href="BFS-graph.html" class="card">
-        <h3>BFS & DFS (v2)</h3>
-        <p>Advanced Graph traversal visualization for Breadth and Depth First Search.</p>
-        <div class="tag">OPEN VIZ →</div>
-    </a>
-    <a href="BFSDFS.html" class="card">
-        <h3>BFS & DFS (v1)</h3>
-        <p>Foundational visualization for tree and graph searching algorithms.</p>
-        <div class="tag">OPEN VIZ →</div>
-    </a>
-    <a href="BiSearchv2.html" class="card">
-        <h3>Binary Search (v2)</h3>
-        <p>Step-by-step logic visualization for sorted array searching.</p>
-        <div class="tag">OPEN VIZ →</div>
-    </a>
-    <a href="Ternary%20Search.html" class="card">
-        <h3>Ternary Search</h3>
-        <p>Visualizing the three-way divide-and-conquer algorithm.</p>
-        <div class="tag">OPEN VIZ →</div>
-    </a>
-    <a href="UCS.html" class="card">
-        <h3>Uniform Cost Search (v1)</h3>
-        <p>Visualizing pathfinding and greedy search logic.</p>
-        <div class="tag">OPEN VIZ →</div>
-    </a>
-    <a href="USCv2.html" class="card">
-        <h3>Uniform Cost Search (v2)</h3>
-        <p>Visualizing pathfinding and greedy search logic.</p>
-        <div class="tag">OPEN VIZ →</div>
-    </a>
-    <a href="hashmap.html" class="card">
-        <h3>Hashmap</h3>
-        <p>Visualizing key-value pairing and collision handling concepts.</p>
-        <div class="tag">OPEN VIZ →</div>
-    </a>
-    <a href="heap.html" class="card">
-        <h3>Heap</h3>
-        <p>Visualization of Max/Min Binary Heap data structures.</p>
-        <div class="tag">OPEN VIZ →</div>
-    </a>
-    <a href="linear-binarySearch.html" class="card">
-        <h3>Linear vs Binary Search</h3>
-        <p>A comparative look at O(n) vs O(log n) searching speeds.</p>
-        <div class="tag">OPEN VIZ →</div>
-    </a>
-    <a href="sortingv2.html" class="card">
-        <h3>Insertion & Merge Sort</h3>
-        <p>Comparison of O(n²) and O(n log n) sorting efficiencies.</p>
-        <div class="tag">OPEN VIZ →</div>
-    </a>
-    <a href="stackQueue.html" class="card">
-        <h3>Stack & Queue</h3>
-        <p>Conceptual visualization of LIFO and FIFO memory structures.</p>
-        <div class="tag">OPEN VIZ →</div>
-    </a>
+    <a href="BFS-graph.html" class="card"><h3>BFS & DFS (v2)</h3><p>Graph traversal visualization.</p><div class="tag">OPEN VIZ →</div></a>
+    <a href="BFSDFS.html" class="card"><h3>BFS & DFS (v1)</h3><p>Foundational visualization.</p><div class="tag">OPEN VIZ →</div></a>
+    <a href="BiSearchv2.html" class="card"><h3>Binary Search (v2)</h3><p>Step-by-step logic.</p><div class="tag">OPEN VIZ →</div></a>
+    <a href="Ternary%20Search.html" class="card"><h3>Ternary Search</h3><p>Three-way divide-and-conquer.</p><div class="tag">OPEN VIZ →</div></a>
+    <a href="UCS.html" class="card"><h3>Uniform Cost Search (v1)</h3><p>Pathfinding and greedy search.</p><div class="tag">OPEN VIZ →</div></a>
+    <a href="USCv2.html" class="card"><h3>Uniform Cost Search (v2)</h3><p>Pathfinding and greedy search.</p><div class="tag">OPEN VIZ →</div></a>
+    <a href="hashmap.html" class="card"><h3>Hashmap</h3><p>Key-value and collision concepts.</p><div class="tag">OPEN VIZ →</div></a>
+    <a href="heap.html" class="card"><h3>Heap</h3><p>Binary Max/Min Heap structures.</p><div class="tag">OPEN VIZ →</div></a>
+    <a href="linear-binarySearch.html" class="card"><h3>Linear vs Binary</h3><p>Speed comparison O(n) vs O(log n).</p><div class="tag">OPEN VIZ →</div></a>
+    <a href="sortingv2.html" class="card"><h3>Insertion & Merge Sort</h3><p>Comparing sort efficiency.</p><div class="tag">OPEN VIZ →</div></a>
+    <a href="stackQueue.html" class="card"><h3>Stack & Queue</h3><p>LIFO and FIFO structures.</p><div class="tag">OPEN VIZ →</div></a>
 </div>
 
 <footer>
-    &copy; 2026 Algorithms and Programming (IS115)
+    &copy; 2026 Singapore Management University | SCIS IS115
 </footer>
 
 </body>
