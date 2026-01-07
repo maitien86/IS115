@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IS115 - Binary Search Visualizer</title>
+    <style>
+        :root {
+            --blue-main: #2980b9; --blue-dark: #1c5985;
+            --red-main: #c0392b; --red-dark: #8a281e;
+            --yellow-main: #f39c12; --yellow-dark: #b3720b;
+            --green-main: #27ae60; --green-dark: #186f3d;
+            --gray-main: #7f8c8d; --gray-dark: #576061;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            /* Subtle gradient background */
+            background: radial-gradient(circle at top center, #eef2f7, #dce4ed);
+        }
+
+        /* The main floating card */
+        .container {
+            background: linear-gradient(to bottom right, #ffffff, #f8f9fa);
+            padding: 2.5rem;
+            border-radius: 20px;
+            /* Deep layered shadows for a floating 3D effect */
+            box-shadow: 
+                0 20px 40px -10px rgba(0,0,0,0.2),
+                0 10px 10px -10px rgba(0,0,0,0.1),
+                inset 0 1px 0px rgba(255,255,255,0.6); /* highlighted top edge */
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+            border: 1px solid rgba(0,0,0,0.05);
+            transform: perspective(1000px) rotateX(2deg); /* Slight perspective tilt */
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .setup-group {
+            margin-bottom: 2rem;
+            font-size: 1.2rem;
+            color: #34495e;
+        }
+
+        /* The sunken input field */
+        input[type=number] {
+            padding: 12px;
+            width: 100px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 12px;
+            background: #eef1f5;
+            /* Inner shadow to make it look inset/sunken */
+            box-shadow: inset 0 3px 8px rgba(0,0,0,0.15), 
+                        inset 0 -2px 4px rgba(255,255,255,0.8);
+            text-align: center;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        input:focus { outline: none; background: #e4e9f0; }
+
+        .controls { display: flex; flex-direction: column; gap: 15px; margin-top: 25px;}
+        
+        /* Base 3D Button Style */
+        .btn-3d {
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1rem;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.1s ease-in-out;
+            position: relative;
+            /* The magic: a solid border on bottom creates "thickness" */
+            border-bottom-style: solid;
+            border-bottom-width: 6px;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+        }
+
+        /* The "Press" Action */
+        .btn-3d:active {
+            /* Move down by the border thickness */
+            transform: translateY(6px);
+            /* Remove the border thickness */
+            border-bottom-width: 0px;
+            /* Add an inner shadow to show depression */
+            box-shadow: inset 0 3px 5px rgba(0,0,0,0.2);
+        }
+
+        /* Button Variations */
+        .btn-start {
+            background: linear-gradient(to bottom, #3498db, var(--blue-main));
+            border-bottom-color: var(--blue-dark);
+            box-shadow: 0 6px 15px rgba(41, 128, 185, 0.3);
+        }
+        .btn-high {
+            background: linear-gradient(to bottom, #e74c3c, var(--red-main));
+            border-bottom-color: var(--red-dark);
+            box-shadow: 0 6px 15px rgba(192, 57, 43, 0.3);
+        }
+        .btn-low {
+            background: linear-gradient(to bottom, #f1c40f, var(--yellow-main));
+            border-bottom-color: var(--yellow-dark);
+            color: #5e4106; /* Darker text for contrast */
+            text-shadow: none;
+            box-shadow: 0 6px 15px rgba(243, 156, 18, 0.3);
+        }
+        .btn-correct {
+            background: linear-gradient(to bottom, #2ecc71, var(--green-main));
+            border-bottom-color: var(--green-dark);
+            box-shadow: 0 6px 15px rgba(39, 174, 96, 0.3);
+        }
+        .btn-reset {
+            background: linear-gradient(to bottom, #95a5a6, var(--gray-main));
+            border-bottom-color: var(--gray-dark);
+            margin-top: 20px;
+        }
+
+        #question {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        /* The "Digital Screen" stats area */
+        .screen-panel {
+            margin-top: 25px;
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', Courier, monospace; /* Monospace for digital look */
+            box-shadow: 
+                inset 0 0 10px rgba(0,0,0,0.8), /* Inner glow */
+                0 2px 4px rgba(255,255,255,0.5); /* Bottom lip highlight */
+            border: 4px solid #bdc3c7;
+            text-shadow: 0 0 5px rgba(46, 204, 113, 0.7); /* Subtle green glow text */
+        }
+        .highlight-num {
+            color: #2ecc71;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        #game-area, #result-area { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>IS115 - Binary Search</h1>
+
+    <div id="setup-area">
+        <p style="color: #666; margin-bottom: 25px;">Set the maximum range and think of a number.</p>
+        <div class="setup-group">
+            <label style="font-weight:bold;">1 to </label>
+            <input type="number" id="max-range" value="1000" min="10">
+        </div>
+        <button class="btn-3d btn-start" onclick="startGame()">Ready to Start</button>
+    </div>
+
+    <div id="game-area">
+        <div id="question">Is it 500?</div>
+        <div class="controls">
+            <button class="btn-3d btn-high" onclick="handleFeedback('high')">Too High (↓)</button>
+            <button class="btn-3d btn-low" onclick="handleFeedback('low')">Too Low (↑)</button>
+            <button class="btn-3d btn-correct" onclick="handleFeedback('correct')">That's it! (✓)</button>
+        </div>
+        
+        <div class="screen-panel">
+           STATUS: SCANNING...<br>
+           > ATTEMPTS: <span class="highlight-num" id="guess-count">1</span><br>
+           > RANGE: [<span class="highlight-num" id="curr-min">1</span> - <span class="highlight-num" id="curr-max">1000</span>]
+        </div>
+    </div>
+
+    <div id="result-area">
+        <h2 id="final-msg" style="font-size: 2rem; color: var(--green-main);">Found it!</h2>
+        <button class="btn-3d btn-reset" onclick="resetGame()">Play Again</button>
+    </div>
+</div>
+
+<script>
+    // The JavaScript logic remains exactly the same as before
+    let min, max, currentGuess, attempts;
+
+    function startGame() {
+        min = 1;
+        const inputVal = document.getElementById('max-range').value;
+        max = parseInt(inputVal) || 1000;
+        if(max < 10) max = 10; // Basic validation
+        attempts = 1;
+        
+        document.getElementById('setup-area').style.display = 'none';
+        document.getElementById('game-area').style.display = 'block';
+        makeGuess();
+    }
+
+    function makeGuess() {
+        currentGuess = Math.floor((min + max) / 2);
+        
+        // Added an animation effect to the numbers changing
+        animateNumberValue(document.getElementById('question'), `Is it ${currentGuess}?`);
+        animateNumberValue(document.getElementById('curr-min'), min);
+        animateNumberValue(document.getElementById('curr-max'), max);
+        document.getElementById('guess-count').innerText = attempts;
+    }
+
+    function handleFeedback(feedback) {
+        if (feedback === 'correct') {
+            showResult(`FOUND IN ${attempts} ATTEMPTS!`);
+        } else if (feedback === 'high') {
+            max = currentGuess - 1;
+            attempts++;
+            checkLogic();
+        } else if (feedback === 'low') {
+            min = currentGuess + 1;
+            attempts++;
+            checkLogic();
+        }
+    }
+
+    function checkLogic() {
+        if (min > max) {
+            showResult("ERROR: LOGIC FAULT. CHECK ANSWERS.");
+        } else {
+            makeGuess();
+        }
+    }
+
+    function showResult(msg) {
+        document.getElementById('game-area').style.display = 'none';
+        document.getElementById('result-area').style.display = 'block';
+        document.getElementById('final-msg').innerText = msg;
+    }
+
+    function resetGame() {
+        document.getElementById('result-area').style.display = 'none';
+        document.getElementById('setup-area').style.display = 'block';
+    }
+
+    // A little helper to make the numbers flash when they change
+    function animateNumberValue(element, newValue) {
+        element.style.opacity = 0;
+        setTimeout(() => {
+            element.innerText = newValue;
+            element.style.opacity = 1;
+            element.style.transition = "opacity 0.3s ease-out";
+        }, 150);
+    }
+</script>
+
+</body>
+</html>
