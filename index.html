@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IS115 - Master Dashboard</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --accent: #00d2ff;
+            --text: #f8fafc;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            background: linear-gradient(to right, #00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        p { opacity: 0.7; margin-top: 10px; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            width: 90%;
+            max-width: 1000px;
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent);
+            box-shadow: 0 10px 30px rgba(0, 210, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .card h2 {
+            margin: 0;
+            color: var(--accent);
+            font-size: 1.4rem;
+        }
+
+        .card p {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .status {
+            display: inline-block;
+            margin-top: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 40px;
+            opacity: 0.4;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>IS115 TOOLBOX</h1>
+    <p>Algorithms & Programming - Master Navigation</p>
+</header>
+
+<div class="dashboard-grid">
+    <a href="random_picker.html" class="card">
+        <div>
+            <h2>Student Random Picker</h2>
+            <p>Select individual students using 3D Soap Bubble animation and hand-tracking gestures.</p>
+        </div>
+        <span class="status">Open App →</span>
+    </a>
+
+    <a href="group_randomizer.html" class="card">
+        <div>
+            <h2>Group Randomizer</h2>
+            <p>Automatically assign students into pairs (or groups of 3) and export results to text files.</p>
+        </div>
+        <span class="status">Open App →</span>
+    </a>
+
+    <a href="stack_queue_viz.html" class="card">
+        <div>
+            <h2>Stack & Queue Viz</h2>
+            <p>Interactive visualization of LIFO and FIFO data structures using pinch gestures.</p>
+        </div>
+        <span class="status">Open App →</span>
+    </a>
+
+    <a href="debug.html" class="card">
+        <div>
+            <h2>Hand Tracking Debug</h2>
+            <p>Technical diagnostic tool to check camera input and MediaPipe skeleton detection.</p>
+        </div>
+        <span class="status">Diagnostics →</span>
+    </a>
+</div>
+
+<footer>
+    &copy; 2026 IS115 - Algorithms and Programming
+</footer>
+
+</body>
+</html>
