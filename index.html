@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IS115 - Algorithms & Programming Toolbox</title>
+    <title>IS115 Dashboard</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -16,7 +16,7 @@
             margin: 0;
             background: var(--bg);
             background-image: radial-gradient(circle at 0% 0%, #1e293b 0%, #0f172a 100%);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
@@ -25,17 +25,17 @@
         }
 
         header {
-            padding: 60px 20px 40px;
+            padding: 50px 20px 30px;
             text-align: center;
         }
 
         h1 {
-            font-size: 2.8rem;
+            font-size: 2.5rem;
             margin: 0;
             background: linear-gradient(90deg, #00d2ff, #3a7bd5);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            letter-spacing: -1px;
+            letter-spacing: 2px;
         }
 
         .category-title {
@@ -45,7 +45,7 @@
             margin: 40px 0 20px;
             font-size: 0.9rem;
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 4px;
             color: var(--accent);
             border-bottom: 1px solid rgba(0, 210, 255, 0.2);
             padding-bottom: 10px;
@@ -53,7 +53,7 @@
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
             width: 90%;
             max-width: 1100px;
@@ -67,155 +67,125 @@
             padding: 24px;
             text-decoration: none;
             color: inherit;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
             backdrop-filter: blur(12px);
             display: flex;
             flex-direction: column;
-            position: relative;
-            overflow: hidden;
         }
 
         .card:hover {
-            transform: translateY(-8px);
+            transform: translateY(-5px);
             border-color: var(--accent);
             background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 210, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 210, 255, 0.2);
         }
 
         .card h3 {
-            margin: 0 0 10px 0;
-            font-size: 1.25rem;
+            margin: 0 0 8px 0;
+            font-size: 1.2rem;
             color: #fff;
         }
 
         .card p {
             margin: 0;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             line-height: 1.5;
-            opacity: 0.7;
+            opacity: 0.6;
         }
 
-        .card .icon {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-            display: block;
-        }
-
-        .card .tag {
-            margin-top: 20px;
-            font-size: 0.75rem;
+        .tag {
+            margin-top: 15px;
+            font-size: 0.7rem;
             font-weight: bold;
             color: var(--accent);
-            display: flex;
-            align-items: center;
+            letter-spacing: 1px;
         }
 
         footer {
             margin-top: auto;
-            padding: 40px;
-            opacity: 0.5;
-            font-size: 0.85rem;
-        }
-
-        @media (max-width: 600px) {
-            h1 { font-size: 2rem; }
-            .grid { grid-template-columns: 1fr; }
+            padding: 30px;
+            opacity: 0.4;
+            font-size: 0.8rem;
         }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>IS115 DASHBOARD</h1>
-    <p>Algorithms and Programming - Course Resources</p>
+    <h1>IS115 TOOLBOX</h1>
 </header>
 
 <div class="category-title">Class Management</div>
 <div class="grid">
     <a href="IS115.html" class="card">
-        <span class="icon">👤</span>
         <h3>Student Selection</h3>
-        <p>3D Soap Bubble random picker for choosing individual students.</p>
-        <div class="tag">OPEN TOOL →</div>
+        <p>Interactive 3D soap bubble picker for choosing students randomly.</p>
+        <div class="tag">LAUNCH APP →</div>
     </a>
     <a href="IS115-group.html" class="card">
-        <span class="icon">👥</span>
         <h3>Group Assignment</h3>
-        <p>Randomly assign students into pairs or groups of 3 with export features.</p>
-        <div class="tag">OPEN TOOL →</div>
+        <p>Randomly assign sections G1-G4 into pairs or groups of three.</p>
+        <div class="tag">LAUNCH APP →</div>
     </a>
 </div>
 
-<div class="category-title">Searching Visualizers</div>
-<div class="grid">
-    <a href="linear-binarySearch.html" class="card">
-        <span class="icon">🔍</span>
-        <h3>Linear & Binary Search</h3>
-        <p>Comparative visualization of basic searching logic.</p>
-        <div class="tag">VIEW VIZ →</div>
-    </a>
-    <a href="BiSearchv2.html" class="card">
-        <span class="icon">📈</span>
-        <h3>Binary Search (v2)</h3>
-        <p>Advanced step-by-step breakdown of the binary search process.</p>
-        <div class="tag">VIEW VIZ →</div>
-    </a>
-    <a href="Ternary%20Search.html" class="card">
-        <span class="icon">🔱</span>
-        <h3>Ternary Search</h3>
-        <p>Visualizing the three-way divide and conquer strategy.</p>
-        <div class="tag">VIEW VIZ →</div>
-    </a>
-    <a href="USCv2.html" class="card">
-        <span class="icon">🛰️</span>
-        <h3>Uniform Cost Search</h3>
-        <p>Visualizing pathfinding and optimal search strategies.</p>
-        <div class="tag">VIEW VIZ →</div>
-    </a>
-</div>
 
-<div class="category-title">Graphs, Sorting & Logic</div>
+<div class="category-title">Visualizers</div>
 <div class="grid">
     <a href="BFS-graph.html" class="card">
-        <span class="icon">🕸️</span>
-        <h3>BFS & DFS (Graph v2)</h3>
-        <p>Complete graph traversal visualization for Breadth/Depth First Search.</p>
-        <div class="tag">VIEW VIZ →</div>
+        <h3>BFS & DFS (v2)</h3>
+        <p>Advanced Graph traversal visualization for Breadth and Depth First Search.</p>
+        <div class="tag">OPEN VIZ →</div>
     </a>
     <a href="BFSDFS.html" class="card">
-        <span class="icon">📍</span>
         <h3>BFS & DFS (v1)</h3>
-        <p>Initial logic visualization for graph searching.</p>
-        <div class="tag">VIEW VIZ →</div>
+        <p>Foundational visualization for tree and graph searching algorithms.</p>
+        <div class="tag">OPEN VIZ →</div>
     </a>
-    <a href="sortingv2.html" class="card">
-        <span class="icon">📊</span>
-        <h3>Insertion & Merge Sort</h3>
-        <p>Visualizing sorting complexity and algorithm efficiency.</p>
-        <div class="tag">VIEW VIZ →</div>
+    <a href="BiSearchv2.html" class="card">
+        <h3>Binary Search (v2)</h3>
+        <p>Step-by-step logic visualization for sorted array searching.</p>
+        <div class="tag">OPEN VIZ →</div>
     </a>
-    <a href="stackQueue.html" class="card">
-        <span class="icon">📦</span>
-        <h3>Stack & Queue</h3>
-        <p>Visualization of LIFO and FIFO data structure concepts.</p>
-        <div class="tag">VIEW VIZ →</div>
+    <a href="Ternary%20Search.html" class="card">
+        <h3>Ternary Search</h3>
+        <p>Visualizing the three-way divide-and-conquer algorithm.</p>
+        <div class="tag">OPEN VIZ →</div>
+    </a>
+    <a href="USCv2.html" class="card">
+        <h3>Uniform Cost Search</h3>
+        <p>Visualizing pathfinding and greedy search logic.</p>
+        <div class="tag">OPEN VIZ →</div>
     </a>
     <a href="hashmap.html" class="card">
-        <span class="icon">🔑</span>
-        <h3>Hashmap Visualization</h3>
-        <p>Understanding key-value storage and collision logic.</p>
-        <div class="tag">VIEW VIZ →</div>
+        <h3>Hashmap</h3>
+        <p>Visualizing key-value pairing and collision handling concepts.</p>
+        <div class="tag">OPEN VIZ →</div>
     </a>
     <a href="heap.html" class="card">
-        <span class="icon">🌳</span>
-        <h3>Heap Structure</h3>
-        <p>Visualizing binary heaps and priority queue properties.</p>
-        <div class="tag">VIEW VIZ →</div>
+        <h3>Heap</h3>
+        <p>Visualization of Max/Min Binary Heap data structures.</p>
+        <div class="tag">OPEN VIZ →</div>
+    </a>
+    <a href="linear-binarySearch.html" class="card">
+        <h3>Linear vs Binary Search</h3>
+        <p>A comparative look at O(n) vs O(log n) searching speeds.</p>
+        <div class="tag">OPEN VIZ →</div>
+    </a>
+    <a href="sortingv2.html" class="card">
+        <h3>Insertion & Merge Sort</h3>
+        <p>Comparison of O(n²) and O(n log n) sorting efficiencies.</p>
+        <div class="tag">OPEN VIZ →</div>
+    </a>
+    <a href="stackQueue.html" class="card">
+        <h3>Stack & Queue</h3>
+        <p>Conceptual visualization of LIFO and FIFO memory structures.</p>
+        <div class="tag">OPEN VIZ →</div>
     </a>
 </div>
 
 <footer>
-    &copy; 2026 - Algorithms & Programming (IS115) Dashboard
+    &copy; 2026 Algorithms and Programming (IS115)
 </footer>
 
 </body>
