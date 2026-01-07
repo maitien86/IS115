@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Ternary Search Visualizer</title>
+    <style>
+        :root {
+            --purple: #8e44ad; --teal: #16a085; --blue: #2980b9;
+            --red: #c0392b; --green: #27ae60; --dark: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #f0f3f7;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            border: 1px solid #eee;
+        }
+
+        /* 3D Button Style */
+        .btn-3d {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            text-transform: uppercase;
+            transition: transform 0.1s, box-shadow 0.1s;
+            border-bottom: 5px solid rgba(0,0,0,0.2);
+        }
+
+        .btn-3d:active {
+            transform: translateY(4px);
+            border-bottom-width: 1px;
+        }
+
+        .btn-start { background: var(--dark); }
+        .btn-low { background: var(--teal); }
+        .btn-mid { background: var(--blue); }
+        .btn-high { background: var(--purple); }
+        .btn-win { background: var(--green); }
+
+        input {
+            width: 100px;
+            padding: 10px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: #2c3e50;
+            color: #2ecc71;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        #game-area, #result-area { display: none; }
+        .guess-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        .card { flex: 1; background: #f8f9fa; padding: 10px; border-radius: 10px; border: 1px solid #eee; }
+        .card span { font-size: 1.5rem; font-weight: bold; display: block; color: var(--blue); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Ternary Search</h1>
+
+    <div id="setup-area">
+        <p>Think of a number between 1 and...</p>
+        <input type="number" id="max-range" value="1000">
+        <button class="btn-3d btn-start" onclick="startGame()">Start Search</button>
+    </div>
+
+    <div id="game-area">
+        <div class="guess-box">
+            <div class="card">Point 1<span id="m1-display">0</span></div>
+            <div class="card">Point 2<span id="m2-display">0</span></div>
+        </div>
+
+        <p>Where is your number?</p>
+        <button class="btn-3d btn-low" onclick="handleInput(1)">Smaller than Point 1</button>
+        <button class="btn-3d btn-mid" onclick="handleInput(2)">Between Point 1 & 2</button>
+        <button class="btn-3d btn-high" onclick="handleInput(3)">Larger than Point 2</button>
+        <button class="btn-3d btn-win" onclick="showResult()">One of these is it!</button>
+
+        <div class="stat-box">
+            > STEP: <span id="step-count">1</span><br>
+            > RANGE: [<span id="low-display"></span> - <span id="high-display"></span>]
+        </div>
+    </div>
+
+    <div id="result-area">
+        <h2 style="color: var(--green)">TARGET FOUND!</h2>
+        <p id="final-stats"></p>
+        <button class="btn-3d btn-start" onclick="location.reload()">Try Again</button>
+    </div>
+</div>
+
+<script>
+    let low, high, m1, m2, steps;
+
+    function startGame() {
+        low = 1;
+        high = parseInt(document.getElementById('max-range').value) || 1000;
+        steps = 1;
+
+        if (high <= 1) {
+            alert("Please enter a number greater than 1");
+            return;
+        }
+
+        document.getElementById('setup-area').style.display = 'none';
+        document.getElementById('game-area').style.display = 'block';
+        updateGame();
+    }
+
+    function updateGame() {
+        // Correct ternary midpoint calculation
+        m1 = Math.floor(low + (high - low) / 3);
+        m2 = Math.floor(high - (high - low) / 3);
+
+        // Ensure m1 and m2 aren't the same if range is small
+        if (m1 === m2 && low < high) {
+            m2 = m1 + 1;
+        }
+
+        document.getElementById('m1-display').innerText = m1;
+        document.getElementById('m2-display').innerText = m2;
+        document.getElementById('low-display').innerText = low;
+        document.getElementById('high-display').innerText = high;
+        document.getElementById('step-count').innerText = steps;
+    }
+
+    function handleInput(choice) {
+        steps++;
+        if (choice === 1) {
+            high = m1 - 1;
+        } else if (choice === 2) {
+            low = m1 + 1;
+            high = m2 - 1;
+        } else if (choice === 3) {
+            low = m2 + 1;
+        }
+
+        if (low > high) {
+            // This handles the case where the user might have misclicked
+            showResult("I think there was a mistake in the answers, but I found the area!");
+        } else {
+            updateGame();
+        }
+    }
+
+    function showResult(customMsg) {
+        document.getElementById('game-area').style.display = 'none';
+        document.getElementById('result-area').style.display = 'block';
+        document.getElementById('final-stats').innerText = customMsg || `Found in ${steps} steps!`;
+    }
+</script>
+
+</body>
+</html>

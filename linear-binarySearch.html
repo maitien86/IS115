@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linear vs Binary Search Visualizer</title>
+    <style>
+        :root {
+            --linear-color: #3498db;
+            --binary-color: #9b59b6;
+            --success: #2ecc71;
+            --active: #f1c40f;
+            --dismissed: #dfe6e9;
+            --dark: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #f4f7f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            align-items: center;
+        }
+
+        input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            width: 80px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+        }
+        .btn-step { background: var(--success); }
+        .btn-reset { background: #7f8c8d; }
+        .btn:disabled { background: #cbd5e0; cursor: not-allowed; }
+
+        .viz-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            width: 1000px;
+            max-width: 95vw;
+        }
+
+        .algo-section {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .algo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 10px;
+        }
+
+        .algo-title { font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+
+        /* Array Styling */
+        .array-row {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .cell {
+            width: 45px;
+            height: 45px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .cell-idx {
+            position: absolute;
+            top: -18px;
+            font-size: 0.7rem;
+            color: #adb5bd;
+        }
+
+        /* States */
+        .checking { transform: translateY(-10px); border-color: var(--active); background: #fff9db; box-shadow: 0 5px 15px rgba(241, 196, 15, 0.3); }
+        .found { background: var(--success); border-color: #27ae60; color: white; transform: scale(1.1); }
+        .dismissed { background: var(--dismissed); color: #b2bec3; border-color: #eee; }
+
+        .stats-badge {
+            background: var(--dark);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+    <h2 style="margin-bottom:5px;">Search Algorithm Visualizer</h2>
+    <p style="color:#7f8c8d; margin-bottom:25px;">Find the target in a <b>sorted</b> array of 20 elements.</p>
+
+    <div class="controls">
+        <label>Target:</label>
+        <input type="number" id="targetInput" value="75">
+        <button class="btn btn-step" id="stepBtn" onclick="takeStep()">Next Step &raquo;</button>
+        <button class="btn btn-reset" onclick="resetAll()">Reset</button>
+    </div>
+
+    <div class="viz-container">
+        <div class="algo-section">
+            <div class="algo-header">
+                <div class="algo-title"><div class="dot" style="background:var(--linear-color)"></div> Linear Search</div>
+                <div class="stats-badge">Comparisons: <span id="linear-comp">0</span></div>
+            </div>
+            <div id="linear-array" class="array-row"></div>
+            <p id="linear-status" style="font-size:0.9rem; color:#666; margin-top:15px; text-align:center;">Press Step to start.</p>
+        </div>
+
+        <div class="algo-section">
+            <div class="algo-header">
+                <div class="algo-title"><div class="dot" style="background:var(--binary-color)"></div> Binary Search (Sorted)</div>
+                <div class="stats-badge">Comparisons: <span id="binary-comp">0</span></div>
+            </div>
+            <div id="binary-array" class="array-row"></div>
+            <p id="binary-status" style="font-size:0.9rem; color:#666; margin-top:15px; text-align:center;">Searching in sorted range...</p>
+        </div>
+    </div>
+
+<script>
+    // Configuration
+    const ARRAY_SIZE = 20;
+    let data = [];
+    let target = 75;
+
+    // Linear State
+    let lIdx = 0;
+    let lFound = false;
+    let lComp = 0;
+
+    // Binary State
+    let bLow = 0;
+    let bHigh = ARRAY_SIZE - 1;
+    let bMid = -1;
+    let bFound = false;
+    let bComp = 0;
+
+    function initData() {
+        data = [];
+        let current = Math.floor(Math.random() * 10) + 5;
+        for (let i = 0; i < ARRAY_SIZE; i++) {
+            data.push(current);
+            current += Math.floor(Math.random() * 10) + 2;
+        }
+        // Make one element the target sometimes to ensure it's there
+        if (Math.random() > 0.5) data[Math.floor(ARRAY_SIZE/2)] = parseInt(document.getElementById('targetInput').value);
+    }
+
+    function renderArrays() {
+        renderArray('linear-array', lIdx, lFound, -1, -1);
+        renderArray('binary-array', bMid, bFound, bLow, bHigh);
+    }
+
+    function renderArray(containerId, activeIdx, found, low, high) {
+        const cont = document.getElementById(containerId);
+        cont.innerHTML = '';
+        data.forEach((val, i) => {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.innerHTML = `<span class="cell-idx">${i}</span>${val}`;
+            
+            if (found && i === activeIdx) cell.classList.add('found');
+            else if (i === activeIdx) cell.classList.add('checking');
+            
+            // Special coloring for Binary Search dismissed range
+            if (containerId === 'binary-array') {
+                if (i < low || i > high) cell.classList.add('dismissed');
+            } else {
+                if (i < lIdx) cell.classList.add('dismissed');
+            }
+
+            cont.appendChild(cell);
+        });
+    }
+
+    function takeStep() {
+        target = parseInt(document.getElementById('targetInput').value);
+        document.getElementById('targetInput').disabled = true;
+
+        // --- LINEAR STEP ---
+        if (!lFound && lIdx < ARRAY_SIZE) {
+            lComp++;
+            document.getElementById('linear-comp').innerText = lComp;
+            if (data[lIdx] === target) {
+                lFound = true;
+                document.getElementById('linear-status').innerText = `Target ${target} found at index ${lIdx}!`;
+            } else {
+                document.getElementById('linear-status').innerText = `Checking index ${lIdx}: ${data[lIdx]} ≠ ${target}`;
+                lIdx++;
+            }
+        } else if (!lFound) {
+            document.getElementById('linear-status').innerText = `Target not found in array.`;
+        }
+
+        // --- BINARY STEP ---
+        if (!bFound && bLow <= bHigh) {
+            bMid = Math.floor((bLow + bHigh) / 2);
+            bComp++;
+            document.getElementById('binary-comp').innerText = bComp;
+
+            if (data[bMid] === target) {
+                bFound = true;
+                document.getElementById('binary-status').innerText = `Found ${target} at index ${bMid}!`;
+            } else if (data[bMid] < target) {
+                document.getElementById('binary-status').innerText = `${data[bMid]} < ${target}. Ignoring left half.`;
+                bLow = bMid + 1;
+            } else {
+                document.getElementById('binary-status').innerText = `${data[bMid]} > ${target}. Ignoring right half.`;
+                bHigh = bMid - 1;
+            }
+        } else if (!bFound) {
+            document.getElementById('binary-status').innerText = `Target not found.`;
+        }
+
+        if ((lFound || lIdx >= ARRAY_SIZE) && (bFound || bLow > bHigh)) {
+            document.getElementById('stepBtn').disabled = true;
+        }
+        
+        renderArrays();
+    }
+
+    function resetAll() {
+        lIdx = 0; lFound = false; lComp = 0;
+        bLow = 0; bHigh = ARRAY_SIZE - 1; bMid = -1; bFound = false; bComp = 0;
+        document.getElementById('linear-comp').innerText = 0;
+        document.getElementById('binary-comp').innerText = 0;
+        document.getElementById('linear-status').innerText = "Press Step to start.";
+        document.getElementById('binary-status').innerText = "Searching in sorted range...";
+        document.getElementById('stepBtn').disabled = false;
+        document.getElementById('targetInput').disabled = false;
+        initData();
+        renderArrays();
+    }
+
+    initData();
+    renderArrays();
+</script>
+</body>
+</html>

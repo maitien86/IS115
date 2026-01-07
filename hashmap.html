@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Collision Handling Visualizer</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #e67e22;
+            --bg: #f0f2f5;
+            --text: #2c3e50;
+            --border: #dcdde1;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            z-index: 10;
+        }
+
+        input {
+            padding: 10px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            width: 80px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 4px solid rgba(0,0,0,0.2);
+        }
+        .btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+        .btn-chain { background: var(--primary); }
+        .btn-probe { background: var(--secondary); }
+
+        .layout {
+            display: flex;
+            gap: 40px;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .section {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        h2 { text-align: center; color: #7f8c8d; margin-top: 0; border-bottom: 2px solid #f4f4f4; padding-bottom: 10px; }
+
+        .table-display {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            min-height: 50px;
+        }
+
+        .index-box {
+            width: 40px;
+            height: 40px;
+            background: var(--dark);
+            background: #2c3e50;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-weight: bold;
+            font-family: monospace;
+            flex-shrink: 0;
+        }
+
+        /* Chaining: Horizontal List */
+        .chain-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            overflow-x: auto;
+        }
+
+        .node {
+            background: var(--primary);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            position: relative;
+            animation: popIn 0.3s ease;
+        }
+
+        .node:not(:last-child)::after {
+            content: "→";
+            margin-left: 8px;
+            color: #bdc3c7;
+        }
+
+        /* Probing: Single Slot */
+        .probe-slot {
+            flex-grow: 1;
+            background: #f9f9f9;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            padding-left: 15px;
+            transition: all 0.3s;
+        }
+
+        .probe-slot.filled {
+            background: var(--secondary);
+            border: none;
+            color: white;
+            font-weight: bold;
+            box-shadow: inset 0 -4px 0 rgba(0,0,0,0.1);
+        }
+
+        .scanning {
+            background: #ffeaa7 !important;
+            border-color: #f1c40f !important;
+            transform: scale(1.02);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Collision Visualizer</h1>
+    <div class="controls">
+        <input type="number" id="inputVal" placeholder="Key">
+        <button class="btn btn-chain" onclick="addChain()">Add Chaining</button>
+        <button class="btn btn-probe" onclick="addProbe()">Add Probing</button>
+        <button class="btn" style="background:#95a5a6;" onclick="resetAll()">Reset</button>
+    </div>
+
+    <div class="layout">
+        <div class="section">
+            <h2>Separate Chaining</h2>
+            <div id="chainTable" class="table-display"></div>
+        </div>
+
+        <div class="section">
+            <h2>Linear Probing</h2>
+            <div id="probeTable" class="table-display"></div>
+        </div>
+    </div>
+
+<script>
+    const SIZE = 10;
+    let chainArr = Array.from({ length: SIZE }, () => []);
+    let probeArr = Array.from({ length: SIZE }, () => null);
+
+    // Initial Draw
+    function init() {
+        drawChain();
+        drawProbe();
+    }
+
+    function drawChain() {
+        const cont = document.getElementById('chainTable');
+        cont.innerHTML = '';
+        for (let i = 0; i < SIZE; i++) {
+            let row = `<div class="row">
+                <div class="index-box">${i}</div>
+                <div class="chain-container">
+                    ${chainArr[i].map(val => `<div class="node">${val}</div>`).join('')}
+                </div>
+            </div>`;
+            cont.innerHTML += row;
+        }
+    }
+
+    function drawProbe() {
+        const cont = document.getElementById('probeTable');
+        cont.innerHTML = '';
+        for (let i = 0; i < SIZE; i++) {
+            let val = probeArr[i];
+            let row = `<div class="row">
+                <div class="index-box">${i}</div>
+                <div class="probe-slot ${val !== null ? 'filled' : ''}" id="p-slot-${i}">
+                    ${val !== null ? val : ''}
+                </div>
+            </div>`;
+            cont.innerHTML += row;
+        }
+    }
+
+    function addChain() {
+        const v = parseInt(document.getElementById('inputVal').value);
+        if (isNaN(v)) return;
+        chainArr[v % SIZE].push(v);
+        drawChain();
+        document.getElementById('inputVal').value = '';
+    }
+
+    async function addProbe() {
+        const v = parseInt(document.getElementById('inputVal').value);
+        if (isNaN(v)) return;
+        document.getElementById('inputVal').value = '';
+
+        let h = v % SIZE;
+        for (let i = 0; i < SIZE; i++) {
+            let curr = (h + i) % SIZE;
+            const slot = document.getElementById(`p-slot-${curr}`);
+            
+            slot.classList.add('scanning');
+            await new Promise(r => setTimeout(r, 400));
+            
+            if (probeArr[curr] === null) {
+                probeArr[curr] = v;
+                slot.classList.remove('scanning');
+                drawProbe();
+                return;
+            }
+            slot.classList.remove('scanning');
+        }
+        alert("Table Full!");
+    }
+
+    function resetAll() {
+        chainArr = Array.from({ length: SIZE }, () => []);
+        probeArr = Array.from({ length: SIZE }, () => null);
+        init();
+    }
+
+    init();
+</script>
+</body>
+</html>

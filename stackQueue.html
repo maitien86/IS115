@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stack vs Queue Visualizer</title>
+    <style>
+        :root {
+            --stack-color: #e74c3c;
+            --queue-color: #3498db;
+            --bg-color: #ecf0f1;
+            --item-size: 60px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #2c3e50;
+        }
+
+        h1 { margin-bottom: 10px; }
+        p.intro { margin-bottom: 30px; color: #7f8c8d; }
+
+        .main-container {
+            display: flex;
+            gap: 50px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        /* --- Common Section Styles --- */
+        .ds-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h2 { margin-top: 0; }
+        .concept-label {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            color: white;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            color: white;
+            font-size: 1rem;
+        }
+        button:active { transform: scale(0.95); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* --- The Data Item Block --- */
+        .data-item {
+            width: var(--item-size);
+            height: var(--item-size);
+            line-height: var(--item-size);
+            text-align: center;
+            font-weight: bold;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            /* Core animation property used by both */
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* ========================
+           STACK SPECIFIC STYLES
+        ======================== */
+        .stack-label { background-color: var(--stack-color); }
+        .btn-push { background-color: var(--stack-color); }
+        .btn-pop { background-color: #c0392b; }
+
+        .stack-container {
+            border: 4px solid #bdc3c7;
+            border-top: none; /* Open top */
+            border-radius: 0 0 12px 12px;
+            width: 80px;
+            height: 300px;
+            background-color: #f9f9f9;
+            /* Crucial for stack: items align to bottom, new ones go on top */
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            padding-bottom: 10px;
+            overflow-y: auto; /* Allow scrolling if it gets too tall */
+            overflow-x: hidden;
+        }
+
+        .stack-item {
+            background-color: var(--stack-color);
+            margin-top: 5px;
+            /* Initial state for entering animation */
+            opacity: 0;
+            transform: translateY(-50px) scale(0.5);
+        }
+        /* State when fully present */
+        .stack-item.present {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        /* State when exiting */
+        .stack-item.popped {
+            opacity: 0;
+            transform: translateY(-100px) rotate(20deg);
+        }
+
+
+        /* ========================
+           QUEUE SPECIFIC STYLES
+        ======================== */
+        .queue-label { background-color: var(--queue-color); }
+        .btn-enqueue { background-color: var(--queue-color); }
+        .btn-dequeue { background-color: #2980b9; }
+
+        .queue-container {
+            border-top: 4px solid #bdc3c7;
+            border-bottom: 4px solid #bdc3c7;
+            /* Open ends */
+            height: 80px;
+            width: 100%;
+            background-color: #f9f9f9;
+            display: flex;
+            flex-direction: row; /* Items align left to right */
+            align-items: center;
+            padding: 0 10px;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .queue-item {
+            background-color: var(--queue-color);
+            margin-right: 5px;
+            flex-shrink: 0; /* Prevent squishing */
+            /* Initial state for enter animation */
+            opacity: 0;
+            transform: translateX(50px) scale(0.5);
+        }
+        /* State when present */
+        .queue-item.present {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+        }
+        /* State when exiting */
+        .queue-item.dequeued {
+            opacity: 0;
+            transform: translateX(-100px);
+            /* Shrink width to make others slide over smoothly */
+            width: 0;
+            margin: 0;
+            padding: 0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Data Structure Visualizer</h1>
+    <p class="intro">Compare how data enters and leaves containers.</p>
+
+    <div class="main-container">
+        
+        <div class="ds-section">
+            <h2>STACK</h2>
+            <div class="concept-label stack-label">LIFO: Last-In, First-Out</div>
+            <p style="font-size: 0.9rem; color: #666;">Like a stack of plates.</p>
+            
+            <div class="controls">
+                <button class="btn-push" onclick="pushToStack()">Push (Add)</button>
+                <button class="btn-pop" id="btnPop" onclick="popFromStack()" disabled>Pop (Remove)</button>
+            </div>
+
+            <div class="stack-container" id="stackContainer">
+                </div>
+        </div>
+
+
+        <div class="ds-section">
+            <h2>QUEUE</h2>
+            <div class="concept-label queue-label">FIFO: First-In, First-Out</div>
+             <p style="font-size: 0.9rem; color: #666;">Like waiting in line.</p>
+
+            <div class="controls">
+                <button class="btn-enqueue" onclick="enqueueToQueue()">Enqueue (Add)</button>
+                <button class="btn-dequeue" id="btnDequeue" onclick="dequeueFromQueue()" disabled>Dequeue (Remove)</button>
+            </div>
+
+             <div class="queue-container" id="queueContainer">
+                 </div>
+        </div>
+
+    </div>
+
+<script>
+    let itemCount = 1; // Just for numbering the blocks
+
+    // ================= HELPER FUNCTIONS =================
+    function createDataItem(value, type) {
+        const div = document.createElement('div');
+        div.classList.add('data-item');
+        div.classList.add(type === 'stack' ? 'stack-item' : 'queue-item');
+        div.innerText = value;
+        return div;
+    }
+
+    function updateButtons() {
+        const stackEmpty = document.getElementById('stackContainer').children.length === 0;
+        document.getElementById('btnPop').disabled = stackEmpty;
+
+        const queueEmpty = document.getElementById('queueContainer').children.length === 0;
+        document.getElementById('btnDequeue').disabled = queueEmpty;
+    }
+
+
+    // ================= STACK LOGIC (LIFO) =================
+    function pushToStack() {
+        const container = document.getElementById('stackContainer');
+        const newItem = createDataItem(itemCount++, 'stack');
+        
+        // Add to DOM
+        container.appendChild(newItem);
+
+        // Trigger animation slightly after adding to DOM so CSS transition catches it
+        setTimeout(() => {
+            newItem.classList.add('present');
+        }, 50);
+
+        updateButtons();
+    }
+
+    function popFromStack() {
+        const container = document.getElementById('stackContainer');
+        if (container.children.length === 0) return;
+
+        // LIFO: The last item added is the last child in the DOM
+        const itemToRemove = container.lastElementChild;
+
+        // 1. Trigger exit animation class
+        itemToRemove.classList.remove('present');
+        itemToRemove.classList.add('popped');
+
+        // 2. Wait for animation to finish, then remove from DOM
+        setTimeout(() => {
+            if (itemToRemove.parentNode === container) {
+                 container.removeChild(itemToRemove);
+            }
+            updateButtons();
+        }, 400); // Must match CSS transition duration (0.4s)
+    }
+
+
+    // ================= QUEUE LOGIC (FIFO) =================
+    function enqueueToQueue() {
+        const container = document.getElementById('queueContainer');
+        const newItem = createDataItem(itemCount++, 'queue');
+
+        // FIFO Adding: Always append to the end of the list
+        container.appendChild(newItem);
+
+        setTimeout(() => {
+            newItem.classList.add('present');
+        }, 50);
+        updateButtons();
+    }
+
+    function dequeueFromQueue() {
+        const container = document.getElementById('queueContainer');
+        if (container.children.length === 0) return;
+
+        // FIFO Removing: Always remove the FIRST child in the DOM
+        const itemToRemove = container.firstElementChild;
+
+        // 1. Trigger exit animation
+        itemToRemove.classList.remove('present');
+        itemToRemove.classList.add('dequeued');
+
+        // 2. Wait for animation, then remove from DOM
+        setTimeout(() => {
+             if (itemToRemove.parentNode === container) {
+                container.removeChild(itemToRemove);
+             }
+             updateButtons();
+        }, 400); // Match CSS transition
+    }
+
+</script>
+
+</body>
+</html>

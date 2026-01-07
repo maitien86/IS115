@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Soap Box Group Randomizer</title>
+    <style>
+        :root { --accent: #00d2ff; }
+        body { margin: 0; background: radial-gradient(circle at center, #1b2735, #000); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; overflow: hidden; }
+        
+        /* UI Layers */
+        #selection-screen, #group-screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; background: rgba(0,0,0,0.85); }
+        #canvas-ui { position: fixed; top: 20px; left: 20px; z-index: 50; display: none; }
+        
+        /* Buttons */
+        .btn { padding: 15px 30px; font-size: 1.1rem; border: 2px solid var(--accent); border-radius: 50px; background: rgba(0, 210, 255, 0.1); color: var(--accent); cursor: pointer; transition: 0.3s; font-weight: bold; margin: 10px; }
+        .btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 20px var(--accent); }
+        .btn-sm { padding: 8px 15px; font-size: 0.9rem; }
+
+        .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        /* Group Result Grid */
+        #group-screen { display: none; overflow-y: auto; padding: 50px 20px; justify-content: flex-start; }
+        .groups-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; width: 90%; }
+        .group-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 15px; padding: 15px; backdrop-filter: blur(10px); }
+        .group-card h3 { color: var(--accent); margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+        .group-card p { margin: 5px 0; font-size: 0.95rem; }
+
+        canvas { display: block; cursor: crosshair; }
+    </style>
+</head>
+<body>
+
+<div id="selection-screen">
+    <h1 style="letter-spacing: 5px;">SELECT SECTION</h1>
+    <div class="section-grid">
+        <button class="btn" onclick="initApp('G1')">SECTION G1</button>
+        <button class="btn" onclick="initApp('G2')">SECTION G2</button>
+        <button class="btn" onclick="initApp('G3')">SECTION G3</button>
+        <button class="btn" onclick="initApp('G4')">SECTION G4</button>
+    </div>
+</div>
+
+<div id="canvas-ui">
+    <button class="btn btn-sm" onclick="location.reload()">← Back</button>
+    <button class="btn" onclick="assignGroups()" style="background: var(--accent); color: black;">RANDOMIZE GROUPS NOW</button>
+</div>
+
+<div id="group-screen">
+    <div style="margin-bottom: 30px;">
+        <button class="btn btn-sm" onclick="showCanvas()">← Back to Animation</button>
+        <button class="btn" onclick="saveToFile()">💾 SAVE TO TEXT FILE</button>
+    </div>
+    <div class="groups-container" id="groups-list"></div>
+</div>
+
+<canvas id="bubbleCanvas"></canvas>
+
+<script>
+const sectionData = {
+    "G1": ["DEX NGIAM CHAO YI", "CHIN JUN WEN", "JAY YEO JUN JIE", "PUA JUN RONG DARYL", "ANG CHENG ZUO", "TAN GUAN WEI", "HAN JING KWANG YULE", "ATHITHYA S P", "CHEW KUO KAI REGEN", "JAYDON SOONG YU CHEN", "DEBESH AHMED SO ASARAF ALI", "TAN RAY YIEN", "MAO CHENG FONG", "HUI HON YEUNG SHAWN", "MAS LUTFIR RAHMAN BIN JUMARI", "IRWIN SIM", "JEREMIAH CHIN WON CHUH", "WONG LIANG HAO JEROME", "TAN JUN SHENG", "LEONG ZHI XIN ISAAC", "TAY CHIN YOU", "TRAN NHAT QUANG", "SONYA LOW YA XUAN", "LIN LEJING FANNY", "JACKSON LOH XU TAO", "ZHANG JINYAN", "HENG ZHENG LIN DYLAN", "LIM YAN XI RACHEL", "ROWENA SIM PUI YEE", "SOH SWEE MIN", "OH ERN QI", "ANGEL CHEY EE ZIA", "TEO YI TING", "TAN ZI XUAN JANICE", "KARIN TAN SZE YU", "JHENUEL RINOAH BATAC BACSAL", "THADDEUS TAN WEN JIE", "WU YUJIA", "ALECIA TIRTA CHING HSIA GOOI", "NGUYEN HA ANH", "SHREYA NINAD GADKARI", "NG ERN KHAI JOSHUA", "LEE YIN QI LAURA"],
+    "G2": ["CHAN DING HAO", "HARI NARAYANAN SURESH", "ONG JUN HONG", "ZAI SHUN YU ZACHARY", "ARIQ LIM KIAT SIANG", "TAN YAN TAT", "IAN PONG", "LU JIA-HONG", "WONG JING ZHI PHILBERT", "JIANG YIT FONG", "HANAFI SANI", "RYAN YANG CHNG YU", "TAN HOU HUA DONALD", "NGO XIAN EN", "CESAR CHEN PERALTA JR II", "MAKENDRA PRASAD SUBRAMANIAN", "MARCUS CHIAM HAO YI", "AW BING XIAN", "ZACHARY ANDREW TEO FU JUN", "LIEW YU CHEN", "JONATHAN LEOW GUAN WEI", "NELVIN TAN JIA LIANG", "BERNARD LO", "MATTHEW TJANDERA", "JAVERINE TAN JING XUAN", "LIORA LIVIA NG", "HOMME JAEMIN", "FANG YUTONG", "SEOW WEE YEE VIVIENNE", "LEE JI HAO", "NUR YAZLINA BINTE AHMAD YAZID", "MUHAMMAD HAIKAL BIN MOHD SOBERI", "ARYAN AMIT KASHIKAR", "HOANG QUYNH CHI", "TARUNIKAA SARAVANAN VIJAYADHANALAKSHMI", "GERMAINE FOO EE HUEI", "SU PYAE PYAE ZAW", "TERESA NG YANG NI", "TAN TZE YIN VALENCIA", "EMILEY J WILLIAMS", "LEE JUN WEI", "MUDIT GUPTA", "HUANG CHUJUN", "LIM ZHI YU"],
+    "G3": ["LOKE HAN SHEN", "SOMESH BALAMURUGAN", "ALDEN WONG CHONG YAN", "JOASH LAW CHO SHUEN", "CRUZ CHUA", "JAMES YAP XU HENG", "LEONG MING LIANG TIMOTHY", "KAVEN TAN KENG HENG", "MOHAMED ISTHIAQ MOHAMED FAROOK", "HAW YAN TZER", "HO ZHI YANG", "KEVAN SEAH PENG HONG", "DAVID AMMIEL WAN", "HUANG YONGXIANG", "ISSAC LAW CHI YEUNG", "FANG KAICONG", "MUHAMMAD FARHAAN SO HAJA MOHIDEEN", "KIERAN RYAN THAM EE JU-UN", "LIAU JUN SHENG", "LEE WEN KHAI JOSHUA", "THANESH SO SATHTHI", "KUMARAN DHANDAPANI", "LEE TYLER", "PEH DING HAO PAULINE", "ALEXANDER JUDE TAN", "CHAN JING RONG", "SHERRYAN SOO TINGXUAN", "JENNIFER JANE BURNS", "CASSANDRA KAYE PEREZ BONZON", "JESSIE TAN JIEYU", "NG YU QI", "YEE WAN SIM", "LOW TZE HAN DEXTER", "KAYRA ZALFA ALIMAA", "EUGENE ANG WEI KIAT", "LIM KE QING CHARLOTTE", "HARINI NARASA ANANTHA NARAYANAN", "MAEGAN KHOO ANN", "SWAN HTET AUNG", "BERITH CHAI YI LE", "AISHANI SAHOO", "NATALIE TUNG QIHUI"],
+    "G4": ["PHUA KIA HENG", "LEE CHERNG KIAT RYAN", "SHOBAN RAJ SO RAJAMOGN", "SETH TAN YU ZHI", "BRIAN SNG", "LEONG YEW KAI", "EASHVAR RAMANAN", "CHUNG YI KAI COEN", "ISAAC HIEW YI HE", "HENG HONG LI", "NOAH GAN", "CHOO JIUN WEI", "SIOW CHIN YUONG", "TAN HIANG JOON GABRIEL", "KIRUBAN SO PRAGATHESVARAN", "LEE JIA LE", "RISHABH SATISH", "TIMOTHY CHAN JIA SHENG", "ONG YU KAI JAVIER", "THET HTAR NWE", "SUI RUIRONG", "EZEKIEL TAN SIYONG", "ADHITYA", "ALLISON MARGARET LOO LI HOUNG", "TAN KAI XIN", "LWIN MOE HTET", "TANG YI XIN SAMANTHA", "NATALIE SOPHIE CHUA XUN", "BUI TIEN MINH", "LEE SUNG-WON", "LEW JING YUAN", "SANJANA SARAVANAN", "MICHELLE FLORENCE PRATAMA TJIANG", "KOH JIAXIN GERALDINE", "KHOO JING WEI", "GABRIELE GIACOMIN", "LEE TZU RUI", "WILLIAM HANDSEL", "CHEN PEI NEE", "WONG WING YEE", "LIM PEI JIE KATHLEEN"]
+};
+
+const canvas = document.getElementById('bubbleCanvas');
+const ctx = canvas.getContext('2d');
+let width, height, boxes = [], currentSection = "", assignedGroups = [];
+
+function initApp(section) {
+    currentSection = section;
+    document.getElementById('selection-screen').style.display = 'none';
+    document.getElementById('canvas-ui').style.display = 'block';
+    resize();
+    createBoxes(sectionData[section]);
+    animate();
+}
+
+function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+}
+
+window.addEventListener('resize', resize);
+
+function createBoxes(names) {
+    boxes = names.map(name => ({
+        name: name,
+        x: Math.random() * (width - 150),
+        y: Math.random() * (height - 80),
+        w: 160, h: 60,
+        vx: (Math.random() - 0.5) * 4,
+        vy: (Math.random() - 0.5) * 4,
+        hue: Math.random() * 360,
+        z: Math.random() // Depth for 3D effect
+    }));
+}
+
+function animate() {
+    if (document.getElementById('group-screen').style.display === 'flex') return;
+    ctx.clearRect(0, 0, width, height);
+
+    boxes.sort((a,b) => b.z - a.z).forEach(b => {
+        let scale = 0.7 + (b.z * 0.4);
+        b.x += b.vx; b.y += b.vy;
+
+        // Bounce
+        if (b.x <= 0 || b.x + b.w * scale >= width) b.vx *= -1;
+        if (b.y <= 0 || b.y + b.h * scale >= height) b.vy *= -1;
+
+        drawSoapBox(b, scale);
+    });
+    requestAnimationFrame(animate);
+}
+
+function drawSoapBox(b, scale) {
+    const sw = b.w * scale;
+    const sh = b.h * scale;
+    
+    ctx.save();
+    ctx.globalAlpha = 0.5 + (b.z * 0.5);
+    
+    // Iridescent Gradient
+    let grad = ctx.createLinearGradient(b.x, b.y, b.x + sw, b.y + sh);
+    grad.addColorStop(0, `hsla(${b.hue}, 80%, 70%, 0.2)`);
+    grad.addColorStop(0.5, `hsla(${(b.hue+40)%360}, 80%, 80%, 0.1)`);
+    grad.addColorStop(1, `hsla(${b.hue}, 100%, 60%, 0.4)`);
+
+    // Box Body
+    ctx.beginPath();
+    ctx.roundRect(b.x, b.y, sw, sh, 15 * scale);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = `hsla(${b.hue}, 100%, 90%, 0.6)`;
+    ctx.lineWidth = 2 * scale;
+    ctx.stroke();
+
+    // 3D Highlight
+    ctx.beginPath();
+    ctx.ellipse(b.x + 20*scale, b.y + 15*scale, 10*scale, 5*scale, Math.PI/4, 0, Math.PI*2);
+    ctx.fillStyle = "rgba(255,255,255,0.4)";
+    ctx.fill();
+
+    // Name
+    ctx.fillStyle = "white";
+    ctx.font = `bold ${13 * scale}px Arial`;
+    ctx.textAlign = "center";
+    ctx.fillText(b.name, b.x + sw/2, b.y + sh/2 + 5);
+    ctx.restore();
+}
+
+function assignGroups() {
+    let list = [...sectionData[currentSection]];
+    // Fisher-Yates Shuffle
+    for (let i = list.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [list[i], list[j]] = [list[j], list[i]];
+    }
+
+    assignedGroups = [];
+    while (list.length > 0) {
+        if (list.length === 3) {
+            assignedGroups.push(list.splice(0, 3));
+        } else {
+            assignedGroups.push(list.splice(0, 2));
+        }
+    }
+
+    displayGroups();
+}
+
+function displayGroups() {
+    const listEl = document.getElementById('groups-list');
+    listEl.innerHTML = "";
+    document.getElementById('group-screen').style.display = 'flex';
+
+    assignedGroups.forEach((group, i) => {
+        const card = document.createElement('div');
+        card.className = 'group-card';
+        card.innerHTML = `<h3>Group ${i + 1}</h3>` + group.map(name => `<p>• ${name}</p>`).join("");
+        listEl.appendChild(card);
+    });
+}
+
+function showCanvas() {
+    document.getElementById('group-screen').style.display = 'none';
+    animate();
+}
+
+function saveToFile() {
+    let text = `RANDOM GROUPS - SECTION ${currentSection}\n`;
+    text += `====================================\n\n`;
+    assignedGroups.forEach((group, i) => {
+        text += `GROUP ${i + 1}:\n`;
+        group.forEach(name => text += `- ${name}\n`);
+        text += `\n`;
+    });
+
+    const blob = new Blob([text], { type: 'text/plain' });
+    const anchor = document.createElement('a');
+    anchor.download = `Groups_${currentSection}.txt`;
+    anchor.href = (window.webkitURL || window.URL).createObjectURL(blob);
+    anchor.click();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insertion vs Iterative Merge Sort</title>
+    <style>
+        :root {
+            --insertion-color: #3498db;
+            --merge-color: #9b59b6;
+            --active: #f1c40f;
+            --success: #2ecc71;
+            --dark: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #f4f7f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .controls {
+            background: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            z-index: 10;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+        }
+        .btn-step { background: var(--success); }
+        .btn-reset { background: #7f8c8d; }
+        .btn:disabled { background: #cbd5e0; cursor: not-allowed; }
+
+        .viz-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            width: 900px;
+            max-width: 95vw;
+        }
+
+        .algo-section {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .algo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .algo-title { font-weight: 800; color: var(--dark); display: flex; align-items: center; gap: 8px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+
+        /* Bars Container */
+        .bars-frame {
+            height: 150px;
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .bar {
+            flex: 1;
+            background: #dfe6e9;
+            transition: all 0.2s ease;
+            position: relative;
+            border-radius: 3px 3px 0 0;
+        }
+
+        .bar-val {
+            position: absolute;
+            top: -20px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #7f8c8d;
+        }
+
+        /* Classes for states */
+        .active { background: var(--active) !important; transform: scaleX(1.1); z-index: 2; }
+        .sorted { background: var(--success) !important; }
+        .comparing { background: #e74c3c !important; }
+        .merging-part { background: #a29bfe; }
+
+        .log {
+            font-size: 0.85rem;
+            color: #636e72;
+            margin-top: 10px;
+            font-family: monospace;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2 style="margin-bottom:10px;">Sorting Visualizer</h2>
+    
+    <div class="controls">
+        <button class="btn btn-step" id="stepBtn" onclick="takeStep()">Next Step &raquo;</button>
+        <button class="btn btn-reset" onclick="resetAll()">Randomize & Reset</button>
+    </div>
+
+    <div class="viz-container">
+        <div class="algo-section">
+            <div class="algo-header">
+                <div class="algo-title"><div class="dot" style="background:var(--insertion-color)"></div> Insertion Sort</div>
+                <div id="ins-stats" style="font-size: 0.8rem; font-weight: bold;">Step: 0</div>
+            </div>
+            <div id="ins-bars" class="bars-frame"></div>
+            <div id="ins-log" class="log">Ready to start.</div>
+        </div>
+
+        <div class="algo-section">
+            <div class="algo-header">
+                <div class="algo-title"><div class="dot" style="background:var(--merge-color)"></div> Iterative Merge Sort (Bottom-Up)</div>
+                <div id="mrg-stats" style="font-size: 0.8rem; font-weight: bold;">Step: 0</div>
+            </div>
+            <div id="mrg-bars" class="bars-frame"></div>
+            <div id="mrg-log" class="log">Ready to start.</div>
+        </div>
+    </div>
+
+<script>
+    const NUM_ELEMENTS = 20;
+    let originalData = [];
+    
+    // Insertion State
+    let insData = [];
+    let insI = 1;
+    let insJ = 1;
+    let insActive = true;
+    let insStep = 0;
+
+    // Merge State (Iterative)
+    let mrgData = [];
+    let mrgWidth = 1;
+    let mrgLeft = 0;
+    let mrgActive = true;
+    let mrgStep = 0;
+
+    function resetAll() {
+        originalData = Array.from({length: NUM_ELEMENTS}, () => Math.floor(Math.random() * 90) + 10);
+        
+        insData = [...originalData];
+        insI = 1; insJ = 1; insActive = true; insStep = 0;
+        
+        mrgData = [...originalData];
+        mrgWidth = 1; mrgLeft = 0; mrgActive = true; mrgStep = 0;
+
+        document.getElementById('stepBtn').disabled = false;
+        render('ins-bars', insData, -1, -1);
+        render('mrg-bars', mrgData, -1, -1);
+        document.getElementById('ins-log').innerText = "Array randomized.";
+        document.getElementById('mrg-log').innerText = "Array randomized.";
+        document.getElementById('ins-stats').innerText = "Step: 0";
+        document.getElementById('mrg-stats').innerText = "Step: 0";
+    }
+
+    function render(containerId, dataArr, activeIdx, compareIdx, sortedCount = 0) {
+        const cont = document.getElementById(containerId);
+        cont.innerHTML = '';
+        dataArr.forEach((val, idx) => {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            bar.style.height = `${val}%`;
+            bar.innerHTML = `<span class="bar-val">${val}</span>`;
+            
+            if (containerId === 'ins-bars') {
+                bar.style.backgroundColor = 'var(--insertion-color)';
+                if (idx === activeIdx) bar.classList.add('active');
+                if (idx === compareIdx) bar.classList.add('comparing');
+                if (idx < insI && !insActive) bar.classList.add('sorted');
+            } else {
+                bar.style.backgroundColor = 'var(--merge-color)';
+                if (idx >= mrgLeft && idx < mrgLeft + 2 * mrgWidth) bar.classList.add('merging-part');
+                if (idx === activeIdx) bar.classList.add('active');
+                if (!mrgActive) bar.classList.add('sorted');
+            }
+            cont.appendChild(bar);
+        });
+    }
+
+    function takeStep() {
+        // --- INSERTION SORT STEP ---
+        if (insActive) {
+            insStep++;
+            if (insJ > 0 && insData[insJ] < insData[insJ - 1]) {
+                document.getElementById('ins-log').innerText = `Swapping ${insData[insJ]} with ${insData[insJ-1]}`;
+                [insData[insJ], insData[insJ - 1]] = [insData[insJ - 1], insData[insJ]];
+                render('ins-bars', insData, insJ - 1, insJ);
+                insJ--;
+            } else {
+                insI++;
+                insJ = insI - 1;
+                if (insI >= NUM_ELEMENTS) {
+                    insActive = false;
+                    document.getElementById('ins-log').innerText = "Insertion Sort Complete!";
+                } else {
+                    document.getElementById('ins-log').innerText = `Moving to index ${insI}`;
+                }
+                render('ins-bars', insData, insI, -1);
+            }
+            document.getElementById('ins-stats').innerText = `Step: ${insStep}`;
+        }
+
+        // --- ITERATIVE MERGE SORT STEP ---
+        // This is a simplified "step" that merges one pair of subarrays per click
+        if (mrgActive) {
+            mrgStep++;
+            let right = Math.min(mrgLeft + mrgWidth, NUM_ELEMENTS);
+            let end = Math.min(mrgLeft + 2 * mrgWidth, NUM_ELEMENTS);
+            
+            document.getElementById('mrg-log').innerText = `Merging chunks of size ${mrgWidth} at index ${mrgLeft}`;
+            merge(mrgData, mrgLeft, right, end);
+            render('mrg-bars', mrgData, mrgLeft, -1);
+
+            mrgLeft += 2 * mrgWidth;
+            if (mrgLeft >= NUM_ELEMENTS) {
+                mrgLeft = 0;
+                mrgWidth *= 2;
+                if (mrgWidth >= NUM_ELEMENTS) {
+                    mrgActive = false;
+                    document.getElementById('mrg-log').innerText = "Merge Sort Complete!";
+                }
+            }
+            document.getElementById('mrg-stats').innerText = `Step: ${mrgStep}`;
+        }
+
+        if (!insActive && !mrgActive) document.getElementById('stepBtn').disabled = true;
+    }
+
+    function merge(arr, left, mid, end) {
+        let leftPart = arr.slice(left, mid);
+        let rightPart = arr.slice(mid, end);
+        let i = 0, j = 0, k = left;
+        while (i < leftPart.length && j < rightPart.length) {
+            if (leftPart[i] <= rightPart[j]) arr[k++] = leftPart[i++];
+            else arr[k++] = rightPart[j++];
+        }
+        while (i < leftPart.length) arr[k++] = leftPart[i++];
+        while (j < rightPart.length) arr[k++] = rightPart[j++];
+    }
+
+    resetAll();
+</script>
+</body>
+</html>

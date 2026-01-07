@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robust Symmetric Heap Visualizer</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2ecc71;
+            --warning: #f1c40f;
+            --danger: #e74c3c;
+            --dark: #2c3e50;
+            --node-size: 44px;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f4f7f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            color: var(--dark);
+        }
+
+        .controls {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            width: 70px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-insert { background: var(--primary); }
+        .btn-extract { background: var(--danger); }
+        .btn:disabled { background: #bdc3c7; cursor: not-allowed; }
+
+        #status { font-weight: bold; margin-bottom: 20px; color: var(--primary); height: 20px; }
+
+        /* Tree Canvas */
+        #container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            background: white;
+            border-radius: 15px;
+            border: 1px solid #e0e0e0;
+            overflow: hidden;
+        }
+
+        #svg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .node {
+            position: absolute;
+            width: var(--node-size);
+            height: var(--node-size);
+            line-height: var(--node-size);
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.5s ease;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            border: 2px solid white;
+        }
+
+        .highlight-comp { background: var(--warning) !important; transform: translate(-50%, -50%) scale(1.2); }
+        .highlight-swap { background: var(--danger) !important; transform: translate(-50%, -50%) scale(1.3); }
+
+        line {
+            stroke: #d1d8e0;
+            stroke-width: 2;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Max-Heap Visualizer</h1>
+    <div id="status">Ready</div>
+
+    <div class="controls">
+        <input type="number" id="heapInput" placeholder="Val">
+        <button class="btn btn-insert" id="insBtn" onclick="insert()">Insert</button>
+        <button class="btn btn-extract" id="extBtn" onclick="extract()">Extract Max</button>
+    </div>
+
+    <div id="container">
+        <svg id="svg-layer"></svg>
+        <div id="nodes"></div>
+    </div>
+
+<script>
+    let heap = [];
+    const CONT_WIDTH = 800;
+    const LEVEL_H = 90;
+    const TOP_M = 60;
+
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    function getPos(idx) {
+        const level = Math.floor(Math.log2(idx + 1));
+        const numInLevel = Math.pow(2, level);
+        const posInLevel = idx - (numInLevel - 1);
+        
+        const section = CONT_WIDTH / numInLevel;
+        const x = (posInLevel * section) + (section / 2);
+        const y = (level * LEVEL_H) + TOP_M;
+        return { x, y };
+    }
+
+    async function insert() {
+        const val = parseInt(document.getElementById('heapInput').value);
+        if (isNaN(val)) return;
+        document.getElementById('heapInput').value = '';
+        
+        heap.push(val);
+        await renderAll();
+        
+        let i = heap.length - 1;
+        while (i > 0) {
+            let p = Math.floor((i - 1) / 2);
+            await renderAll(i, p, 'highlight-comp');
+            await sleep(600);
+            
+            if (heap[i] > heap[p]) {
+                await renderAll(i, p, 'highlight-swap');
+                await sleep(400);
+                [heap[i], heap[p]] = [heap[p], heap[i]];
+                i = p;
+                await renderAll();
+                await sleep(400);
+            } else break;
+        }
+        renderAll();
+    }
+
+    async function extract() {
+        if (heap.length === 0) return;
+        if (heap.length === 1) {
+            heap.pop();
+            renderAll();
+            return;
+        }
+
+        heap[0] = heap.pop();
+        await renderAll(0);
+        
+        let i = 0;
+        while (true) {
+            let l = 2 * i + 1, r = 2 * i + 2, big = i;
+            if (l < heap.length && heap[l] > heap[big]) big = l;
+            if (r < heap.length && heap[r] > heap[big]) big = r;
+            
+            if (big !== i) {
+                await renderAll(i, big, 'highlight-swap');
+                await sleep(600);
+                [heap[i], heap[big]] = [heap[big], heap[i]];
+                i = big;
+                await renderAll();
+                await sleep(400);
+            } else break;
+        }
+        renderAll();
+    }
+
+    async function renderAll(h1 = null, h2 = null, css = '') {
+        const nodeLayer = document.getElementById('nodes');
+        const svgLayer = document.getElementById('svg-layer');
+        
+        nodeLayer.innerHTML = '';
+        svgLayer.innerHTML = '';
+
+        // Lines
+        for (let i = 0; i < heap.length; i++) {
+            let l = 2 * i + 1, r = 2 * i + 2;
+            let pPos = getPos(i);
+            [l, r].forEach(cIdx => {
+                if (cIdx < heap.length) {
+                    let cPos = getPos(cIdx);
+                    let line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", pPos.x); line.setAttribute("y1", pPos.y);
+                    line.setAttribute("x2", cPos.x); line.setAttribute("y2", cPos.y);
+                    svgLayer.appendChild(line);
+                }
+            });
+        }
+
+        // Nodes
+        heap.forEach((val, i) => {
+            let pos = getPos(i);
+            let div = document.createElement('div');
+            div.className = 'node';
+            div.innerText = val;
+            div.style.left = pos.x + 'px';
+            div.style.top = pos.y + 'px';
+            if (i === h1 || i === h2) div.classList.add(css || 'highlight-comp');
+            nodeLayer.appendChild(div);
+        });
+    }
+</script>
+</body>
+</html>

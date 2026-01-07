@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symmetric Sorting Visualizer</title>
+    <style>
+        :root {
+            --insertion-color: #3498db;
+            --merge-color: #9b59b6;
+            --active: #f1c40f;
+            --success: #2ecc71;
+            --cluster-border: #9b59b6;
+            --dark: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #f0f3f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            user-select: none;
+        }
+
+        .header { text-align: center; margin-bottom: 10px; }
+        kbd {
+            background-color: #eee;
+            border-radius: 3px;
+            border: 1px solid #b4b4b4;
+            box-shadow: 0 1px 1px rgba(0,0,0,.2);
+            color: #333;
+            display: inline-block;
+            font-size: .85em;
+            font-weight: 700;
+            line-height: 1;
+            padding: 2px 4px;
+            white-space: nowrap;
+        }
+
+        .controls {
+            background: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            z-index: 10;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+        }
+        .btn-step { background: var(--success); border-bottom: 4px solid #27ae60; }
+        .btn-reset { background: #7f8c8d; border-bottom: 4px solid #636e72; }
+        .btn:active { transform: translateY(2px); border-bottom-width: 1px; }
+        .btn:disabled { background: #cbd5e0; cursor: not-allowed; border: none; }
+
+        .viz-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            width: 900px;
+            max-width: 95vw;
+        }
+
+        .algo-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .algo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .algo-title { font-weight: 800; color: var(--dark); font-size: 1.1rem; }
+
+        /* Bars Frame */
+        .bars-frame {
+            height: 180px;
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            padding: 10px;
+            position: relative;
+        }
+
+        .bar {
+            flex: 1;
+            background: #dfe6e9;
+            transition: all 0.3s ease;
+            position: relative;
+            border-radius: 4px 4px 0 0;
+            z-index: 2;
+        }
+
+        .bar-val {
+            position: absolute;
+            top: -22px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #7f8c8d;
+        }
+
+        /* Cluster Box for Merge Sort */
+        .cluster-box {
+            position: absolute;
+            bottom: 0;
+            height: 200px;
+            border: 2px dashed var(--cluster-border);
+            background: rgba(155, 89, 182, 0.05);
+            border-radius: 8px;
+            transition: all 0.4s ease;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Status Colors */
+        .active { background: var(--active) !important; transform: scale(1.05); }
+        .sorted { background: var(--success) !important; }
+        .comparing { background: #e74c3c !important; }
+
+        .log {
+            font-size: 0.9rem;
+            color: #636e72;
+            margin-top: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2>Visual Sorting Lab</h2>
+        <p>Press <kbd>SPACE</kbd> or click <b>Next Step</b> to advance</p>
+    </div>
+    
+    <div class="controls">
+        <button class="btn btn-step" id="stepBtn" onclick="takeStep()">Next Step &raquo;</button>
+        <button class="btn btn-reset" onclick="resetAll()">Randomize</button>
+    </div>
+
+    <div class="viz-container">
+        <div class="algo-section">
+            <div class="algo-header">
+                <div class="algo-title">Insertion Sort</div>
+                <div id="ins-stats">Step: 0</div>
+            </div>
+            <div id="ins-bars" class="bars-frame"></div>
+            <div id="ins-log" class="log">Press space to begin.</div>
+        </div>
+
+        <div class="algo-section">
+            <div class="algo-header">
+                <div class="algo-title">Iterative Merge Sort</div>
+                <div id="mrg-stats">Step: 0</div>
+            </div>
+            <div id="mrg-bars" class="bars-frame">
+                <div id="cluster-overlay"></div>
+            </div>
+            <div id="mrg-log" class="log">Clusters of size 1 identified.</div>
+        </div>
+    </div>
+
+<script>
+    const NUM_ELEMENTS = 16; // Use power of 2 for clean merge visuals
+    let insData = [], mrgData = [];
+    let insI = 1, insJ = 1, insActive = true, insStep = 0;
+    let mrgWidth = 1, mrgLeft = 0, mrgActive = true, mrgStep = 0;
+
+    // Listen for Space Key
+    window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+            e.preventDefault(); // Prevent scrolling
+            takeStep();
+        }
+    });
+
+    function resetAll() {
+        const data = Array.from({length: NUM_ELEMENTS}, () => Math.floor(Math.random() * 80) + 15);
+        insData = [...data];
+        mrgData = [...data];
+        
+        insI = 1; insJ = 1; insActive = true; insStep = 0;
+        mrgWidth = 1; mrgLeft = 0; mrgActive = true; mrgStep = 0;
+
+        document.getElementById('stepBtn').disabled = false;
+        renderIns();
+        renderMrg();
+        document.getElementById('ins-log').innerText = "Ready.";
+        document.getElementById('mrg-log').innerText = "Starting with width = 1.";
+    }
+
+    function renderIns(activeIdx = -1, compareIdx = -1) {
+        const cont = document.getElementById('ins-bars');
+        cont.innerHTML = '';
+        insData.forEach((val, idx) => {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            bar.style.height = `${val}%`;
+            bar.style.backgroundColor = 'var(--insertion-color)';
+            bar.innerHTML = `<span class="bar-val">${val}</span>`;
+            if (idx === activeIdx) bar.classList.add('active');
+            if (idx === compareIdx) bar.classList.add('comparing');
+            if (!insActive) bar.classList.add('sorted');
+            cont.appendChild(bar);
+        });
+    }
+
+    function renderMrg() {
+        const cont = document.getElementById('mrg-bars');
+        cont.innerHTML = '';
+        
+        // Add Cluster Box
+        if (mrgActive) {
+            const box = document.createElement('div');
+            box.className = 'cluster-box';
+            const barWidth = 100 / NUM_ELEMENTS;
+            box.style.width = `calc(${(2 * mrgWidth) * barWidth}% - 4px)`;
+            box.style.left = `calc(${mrgLeft * barWidth}% + 2px)`;
+            cont.appendChild(box);
+        }
+
+        mrgData.forEach((val, idx) => {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            bar.style.height = `${val}%`;
+            bar.style.backgroundColor = 'var(--merge-color)';
+            bar.innerHTML = `<span class="bar-val">${val}</span>`;
+            if (!mrgActive) bar.classList.add('sorted');
+            cont.appendChild(bar);
+        });
+    }
+
+    function takeStep() {
+        // Insertion Logic
+        if (insActive) {
+            insStep++;
+            if (insJ > 0 && insData[insJ] < insData[insJ - 1]) {
+                [insData[insJ], insData[insJ - 1]] = [insData[insJ - 1], insData[insJ]];
+                renderIns(insJ - 1, insJ);
+                insJ--;
+            } else {
+                insI++;
+                insJ = insI - 1;
+                if (insI >= NUM_ELEMENTS) {
+                    insActive = false;
+                    document.getElementById('ins-log').innerText = "Sorted!";
+                }
+                renderIns(insI);
+            }
+            document.getElementById('ins-stats').innerText = `Step: ${insStep}`;
+        }
+
+        // Iterative Merge Logic
+        if (mrgActive) {
+            mrgStep++;
+            let mid = Math.min(mrgLeft + mrgWidth, NUM_ELEMENTS);
+            let end = Math.min(mrgLeft + 2 * mrgWidth, NUM_ELEMENTS);
+            
+            document.getElementById('mrg-log').innerText = `Merging [${mrgLeft}-${mid-1}] and [${mid}-${end-1}]`;
+            
+            // Perform Merge
+            let leftPart = mrgData.slice(mrgLeft, mid);
+            let rightPart = mrgData.slice(mid, end);
+            let i = 0, j = 0, k = mrgLeft;
+            while (i < leftPart.length && j < rightPart.length) {
+                if (leftPart[i] <= rightPart[j]) mrgData[k++] = leftPart[i++];
+                else mrgData[k++] = rightPart[j++];
+            }
+            while (i < leftPart.length) mrgData[k++] = leftPart[i++];
+            while (j < rightPart.length) mrgData[k++] = rightPart[j++];
+
+            renderMrg();
+
+            mrgLeft += 2 * mrgWidth;
+            if (mrgLeft >= NUM_ELEMENTS) {
+                mrgLeft = 0;
+                mrgWidth *= 2;
+                if (mrgWidth >= NUM_ELEMENTS) {
+                    mrgActive = false;
+                    document.getElementById('mrg-log').innerText = "Sorted!";
+                }
+            }
+            document.getElementById('mrg-stats').innerText = `Step: ${mrgStep}`;
+        }
+
+        if (!insActive && !mrgActive) document.getElementById('stepBtn').disabled = true;
+    }
+
+    resetAll();
+</script>
+</body>
+</html>

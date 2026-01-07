@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BFS vs DFS Visualizer</title>
+    <style>
+        :root {
+            --bfs-color: #3498db;
+            --dfs-color: #e67e22;
+            --visited: #2ecc71;
+            --scanning: #f1c40f;
+            --node-size: 40px;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 50px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+        .btn-bfs { background: var(--bfs-color); }
+        .btn-dfs { background: var(--dfs-color); }
+        .btn-reset { background: #95a5a6; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        #status-area {
+            text-align: center;
+            margin-bottom: 20px;
+            height: 60px;
+        }
+
+        .worklist-box {
+            font-family: monospace;
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 5px 15px;
+            border-radius: 5px;
+            margin-top: 5px;
+            display: inline-block;
+        }
+
+        /* Tree Viewport */
+        #viewport {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            background: white;
+            border-radius: 15px;
+            border: 1px solid #e0e0e0;
+            overflow: hidden;
+        }
+
+        #svg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .node {
+            position: absolute;
+            width: var(--node-size);
+            height: var(--node-size);
+            line-height: var(--node-size);
+            background: white;
+            border: 2px solid #ddd;
+            color: #333;
+            border-radius: 50%;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.4s ease;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        .node.visiting { background: var(--scanning) !important; color: white; border-color: white; transform: translate(-50%, -50%) scale(1.3); }
+        .node.visited { background: var(--visited) !important; color: white; border-color: white; }
+        
+        line { stroke: #dcdde1; stroke-width: 2; }
+    </style>
+</head>
+<body>
+
+    <h1>Traversal Visualizer</h1>
+    
+    <div class="controls">
+        <button class="btn btn-bfs" id="bfsBtn" onclick="startTraversal('BFS')">Breadth-First (BFS)</button>
+        <button class="btn btn-dfs" id="dfsBtn" onclick="startTraversal('DFS')">Depth-First (DFS)</button>
+        <button class="btn btn-reset" onclick="reset()">Reset</button>
+    </div>
+
+    <div id="status-area">
+        <div id="msg">Select a traversal method</div>
+        <div id="worklist" class="worklist-box" style="display:none;"></div>
+    </div>
+
+    <div id="viewport">
+        <svg id="svg-layer"></svg>
+        <div id="nodes"></div>
+    </div>
+
+<script>
+    // Tree data: Child links
+    const adj = {
+        0: [1, 2],
+        1: [3, 4],
+        2: [5, 6],
+        3: [7, 8],
+        4: [], 5: [], 6: [], 7: [], 8: []
+    };
+    const nodeCount = 9;
+    let isRunning = false;
+
+    // Symmetric Coords
+    function getPos(idx) {
+        const level = Math.floor(Math.log2(idx + 1));
+        const numInLevel = Math.pow(2, level);
+        const posInLevel = idx - (numInLevel - 1);
+        const section = 800 / numInLevel;
+        return { x: (posInLevel * section) + (section / 2), y: (level * 90) + 50 };
+    }
+
+    function init() {
+        const nodeLayer = document.getElementById('nodes');
+        const svgLayer = document.getElementById('svg-layer');
+        nodeLayer.innerHTML = '';
+        svgLayer.innerHTML = '';
+
+        for (let i = 0; i < nodeCount; i++) {
+            const pos = getPos(i);
+            const div = document.createElement('div');
+            div.className = 'node';
+            div.id = `node-${i}`;
+            div.innerText = i;
+            div.style.left = pos.x + 'px';
+            div.style.top = pos.y + 'px';
+            nodeLayer.appendChild(div);
+
+            if (adj[i]) {
+                adj[i].forEach(childIdx => {
+                    const cPos = getPos(childIdx);
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", pos.x); line.setAttribute("y1", pos.y);
+                    line.setAttribute("x2", cPos.x); line.setAttribute("y2", cPos.y);
+                    svgLayer.appendChild(line);
+                });
+            }
+        }
+    }
+
+    async function startTraversal(type) {
+        if (isRunning) return;
+        isRunning = true;
+        document.getElementById('bfsBtn').disabled = true;
+        document.getElementById('dfsBtn').disabled = true;
+        document.getElementById('worklist').style.display = 'inline-block';
+
+        let list = [0]; // Starting node
+        let visitedOrder = [];
+
+        while (list.length > 0) {
+            // SHOW WORKLIST
+            document.getElementById('worklist').innerText = (type === 'BFS' ? "Queue: [" : "Stack: [") + list.join(', ') + "]";
+            
+            // PICK NEXT NODE
+            // BFS = Dequeue (front), DFS = Pop (back)
+            let current = (type === 'BFS') ? list.shift() : list.pop();
+            
+            const el = document.getElementById(`node-${current}`);
+            el.classList.add('visiting');
+            document.getElementById('msg').innerText = `${type} Visiting Node ${current}...`;
+            
+            await new Promise(r => setTimeout(r, 800));
+            
+            el.classList.remove('visiting');
+            el.classList.add('visited');
+            visitedOrder.push(current);
+
+            // ADD CHILDREN
+            if (adj[current]) {
+                // For DFS to visit left-child first, we push children in reverse order 
+                // because it's a stack (Last-In-First-Out)
+                let children = (type === 'DFS') ? [...adj[current]].reverse() : adj[current];
+                list.push(...children);
+            }
+        }
+
+        document.getElementById('msg').innerText = `${type} Complete! Order: ${visitedOrder.join(' → ')}`;
+        isRunning = false;
+    }
+
+    function reset() {
+        location.reload();
+    }
+
+    init();
+</script>
+</body>
+</html>

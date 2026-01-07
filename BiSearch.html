@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Search Visualizer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 { color: #1a73e8; margin-bottom: 1rem; }
+        .setup-group { margin-bottom: 1.5rem; }
+        input {
+            padding: 8px;
+            width: 80px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .controls { display: flex; flex-direction: column; gap: 10px; }
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+        .btn-start { background-color: #1a73e8; color: white; }
+        .btn-high { background-color: #ea4335; color: white; }
+        .btn-low { background-color: #fbbc05; color: black; }
+        .btn-correct { background-color: #34a853; color: white; }
+        .btn-reset { background-color: #70757a; color: white; margin-top: 10px; }
+        
+        #game-area, #result-area { display: none; }
+        .stats { font-size: 0.9rem; color: #5f6368; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Binary Search</h1>
+
+    <div id="setup-area">
+        <p>Set your range and think of a number!</p>
+        <div class="setup-group">
+            <label>1 to </label>
+            <input type="number" id="max-range" value="1000">
+        </div>
+        <button class="btn-start" onclick="startGame()">I'm Ready!</button>
+    </div>
+
+    <div id="game-area">
+        <p id="question">Is your number 500?</p>
+        <div class="controls">
+            <button class="btn-high" onclick="handleFeedback('high')">Too High (My number is smaller)</button>
+            <button class="btn-low" onclick="handleFeedback('low')">Too Low (My number is bigger)</button>
+            <button class="btn-correct" onclick="handleFeedback('correct')">That's it!</button>
+        </div>
+        <div class="stats">
+            Guess count: <span id="guess-count">1</span><br>
+            Current Range: [<span id="curr-min">1</span> - <span id="curr-max">1000</span>]
+        </div>
+    </div>
+
+    <div id="result-area">
+        <h2 id="final-msg">Found it!</h2>
+        <button class="btn-reset" onclick="resetGame()">Play Again</button>
+    </div>
+</div>
+
+<script>
+    let min, max, currentGuess, attempts;
+
+    function startGame() {
+        min = 1;
+        max = parseInt(document.getElementById('max-range').value) || 1000;
+        attempts = 1;
+        
+        document.getElementById('setup-area').style.display = 'none';
+        document.getElementById('game-area').style.display = 'block';
+        makeGuess();
+    }
+
+    function makeGuess() {
+        // The core Binary Search logic: (min + max) / 2
+        currentGuess = Math.floor((min + max) / 2);
+        
+        document.getElementById('question').innerText = `Is your number ${currentGuess}?`;
+        document.getElementById('guess-count').innerText = attempts;
+        document.getElementById('curr-min').innerText = min;
+        document.getElementById('curr-max').innerText = max;
+    }
+
+    function handleFeedback(feedback) {
+        if (feedback === 'correct') {
+            showResult(`Got it in ${attempts} guesses!`);
+        } else if (feedback === 'high') {
+            max = currentGuess - 1;
+            attempts++;
+            checkLogic();
+        } else if (feedback === 'low') {
+            min = currentGuess + 1;
+            attempts++;
+            checkLogic();
+        }
+    }
+
+    function checkLogic() {
+        if (min > max) {
+            showResult("Wait, something is wrong. Check your answers!");
+        } else {
+            makeGuess();
+        }
+    }
+
+    function showResult(msg) {
+        document.getElementById('game-area').style.display = 'none';
+        document.getElementById('result-area').style.display = 'block';
+        document.getElementById('final-msg').innerText = msg;
+    }
+
+    function resetGame() {
+        document.getElementById('result-area').style.display = 'none';
+        document.getElementById('setup-area').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>

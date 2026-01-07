@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Traversal with History</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #e67e22;
+            --success: #2ecc71;
+            --warning: #f1c40f;
+            --pending: #9b59b6;
+            --dark: #2c3e50;
+            --node-size: 50px;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #f4f7f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .controls {
+            background: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+        }
+        .btn-bfs { background: var(--primary); }
+        .btn-dfs { background: var(--secondary); }
+        .btn:disabled { background: #cbd5e0; cursor: not-allowed; }
+
+        #status-bar {
+            background: var(--dark);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            margin-bottom: 10px;
+            min-width: 500px;
+            text-align: center;
+        }
+
+        /* Traversal Sequence Style */
+        .history-container {
+            width: 800px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            overflow-x: auto;
+            min-height: 50px;
+            border: 1px solid #e2e8f0;
+        }
+        .history-label { font-weight: bold; color: #7f8c8d; font-size: 0.8rem; text-transform: uppercase; white-space: nowrap; }
+        .history-node {
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            flex-shrink: 0;
+            animation: pop 0.3s ease;
+        }
+
+        #viewport {
+            position: relative;
+            width: 800px;
+            height: 450px;
+            background: white;
+            border-radius: 20px;
+            border: 2px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        #svg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+        .node {
+            position: absolute;
+            width: var(--node-size);
+            height: var(--node-size);
+            line-height: var(--node-size);
+            background: white;
+            border: 3px solid #cbd5e0;
+            color: var(--dark);
+            border-radius: 50%;
+            text-align: center;
+            font-weight: bold;
+            transform: translate(-50%, -50%);
+            transition: all 0.4s ease;
+            z-index: 10;
+        }
+
+        .node.seen { background: var(--pending); color: white; border-color: white; }
+        .node.active { background: var(--warning); color: white; border-color: white; transform: translate(-50%, -50%) scale(1.2); }
+        .node.done { background: var(--success); color: white; border-color: white; }
+        
+        line { stroke: #cbd5e0; stroke-width: 3; transition: stroke 0.4s; }
+        line.active-edge { stroke: var(--dark); stroke-width: 4; }
+
+        @keyframes pop {
+            from { transform: scale(0); }
+            to { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Graph Traversal Visualizer</h1>
+
+    <div class="controls">
+        <button class="btn btn-bfs" id="btn-bfs" onclick="run('BFS')">Breadth-First</button>
+        <button class="btn btn-dfs" id="btn-dfs" onclick="run('DFS')">Depth-First</button>
+        <button class="btn" style="background:#7f8c8d" onclick="location.reload()">Reset</button>
+    </div>
+
+    <div id="status-bar">Ready. Traversal starts at Node 0.</div>
+
+    <div class="history-container" id="history">
+        <div class="history-label">Visit Order:</div>
+        </div>
+
+    <div id="viewport">
+        <svg id="svg-layer"></svg>
+        <div id="nodes-container"></div>
+    </div>
+
+<script>
+    const nodes = [
+        {id: 0, x: 80, y: 225}, {x: 220, y: 100}, {x: 220, y: 350},
+        {x: 400, y: 100}, {x: 400, y: 350}, {x: 580, y: 225},
+        {x: 400, y: 225}, {x: 720, y: 225}
+    ];
+
+    const edges = [
+        [0, 1], [0, 2], [1, 3], [2, 4], [3, 5], [4, 5], [1, 6], [3, 6], [5, 7]
+    ];
+
+    const adj = Array.from({length: nodes.length}, () => []);
+    edges.forEach(([u, v]) => { adj[u].push(v); adj[v].push(u); });
+
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    function init() {
+        const svg = document.getElementById('svg-layer');
+        const nodeLayer = document.getElementById('nodes-container');
+
+        edges.forEach(([u, v]) => {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", nodes[u].x); line.setAttribute("y1", nodes[u].y);
+            line.setAttribute("x2", nodes[v].x); line.setAttribute("y2", nodes[v].y);
+            line.id = `edge-${Math.min(u,v)}-${Math.max(u,v)}`;
+            svg.appendChild(line);
+        });
+
+        nodes.forEach((n, i) => {
+            const div = document.createElement('div');
+            div.className = 'node'; div.id = `node-${i}`; div.innerText = i;
+            div.style.left = n.x + 'px'; div.style.top = n.y + 'px';
+            nodeLayer.appendChild(div);
+        });
+    }
+
+    async function run(type) {
+        document.getElementById('btn-bfs').disabled = true;
+        document.getElementById('btn-dfs').disabled = true;
+        const status = document.getElementById('status-bar');
+        const history = document.getElementById('history');
+        const color = (type === 'BFS') ? 'var(--primary)' : 'var(--secondary)';
+
+        let visited = new Set();
+        let collection = [0];
+        visited.add(0);
+        document.getElementById('node-0').classList.add('seen');
+
+        while (collection.length > 0) {
+            status.innerText = `${type} - ${type === 'BFS' ? 'Queue' : 'Stack'}: [${collection.join(', ')}]`;
+            await sleep(800);
+
+            let current = (type === 'BFS') ? collection.shift() : collection.pop();
+            const currEl = document.getElementById(`node-${current}`);
+
+            currEl.classList.remove('seen');
+            currEl.classList.add('active');
+            await sleep(800);
+
+            // Update History Order
+            const histNode = document.createElement('div');
+            histNode.className = 'history-node';
+            histNode.style.backgroundColor = color;
+            histNode.innerText = current;
+            history.appendChild(histNode);
+
+            let neighbors = adj[current];
+            if (type === 'DFS') neighbors = [...neighbors].reverse();
+
+            for (let neighbor of neighbors) {
+                if (!visited.has(neighbor)) {
+                    visited.add(neighbor);
+                    collection.push(neighbor);
+                    document.getElementById(`node-${neighbor}`).classList.add('seen');
+                    const eId = `edge-${Math.min(current, neighbor)}-${Math.max(current, neighbor)}`;
+                    const edge = document.getElementById(eId);
+                    if (edge) edge.classList.add('active-edge');
+                    await sleep(400);
+                }
+            }
+            currEl.classList.remove('active');
+            currEl.classList.add('done');
+        }
+        status.innerText = `${type} Traversal Complete.`;
+    }
+
+    init();
+</script>
+</body>
+</html>
