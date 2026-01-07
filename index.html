@@ -3,145 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IS115 - Master Dashboard</title>
+    <title>IS115 - Algorithms & Programming Toolbox</title>
     <style>
         :root {
             --bg: #0f172a;
-            --card-bg: rgba(255, 255, 255, 0.05);
             --accent: #00d2ff;
-            --text: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text-main: #f8fafc;
         }
 
         body {
             margin: 0;
-            background-color: var(--bg);
-            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            color: var(--text);
+            background: var(--bg);
+            background-image: radial-gradient(circle at 0% 0%, #1e293b 0%, #0f172a 100%);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: var(--text-main);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
         }
 
         header {
-            padding: 60px 20px;
+            padding: 60px 20px 40px;
             text-align: center;
         }
 
         h1 {
-            font-size: 2.5rem;
+            font-size: 2.8rem;
             margin: 0;
-            background: linear-gradient(to right, #00d2ff, #3a7bd5);
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            letter-spacing: 2px;
+            letter-spacing: -1px;
         }
 
-        p { opacity: 0.7; margin-top: 10px; }
-
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
+        .category-title {
             width: 90%;
-            max-width: 1000px;
-            padding: 20px;
+            max-width: 1100px;
+            text-align: left;
+            margin: 40px 0 20px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--accent);
+            border-bottom: 1px solid rgba(0, 210, 255, 0.2);
+            padding-bottom: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            width: 90%;
+            max-width: 1100px;
+            margin-bottom: 40px;
         }
 
         .card {
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 30px;
+            border-radius: 16px;
+            padding: 24px;
             text-decoration: none;
             color: inherit;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(12px);
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
         }
 
         .card:hover {
-            transform: translateY(-10px);
+            transform: translateY(-8px);
             border-color: var(--accent);
-            box-shadow: 0 10px 30px rgba(0, 210, 255, 0.2);
             background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 210, 255, 0.2);
         }
 
-        .card h2 {
-            margin: 0;
-            color: var(--accent);
-            font-size: 1.4rem;
+        .card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.25rem;
+            color: #fff;
         }
 
         .card p {
+            margin: 0;
             font-size: 0.9rem;
             line-height: 1.5;
+            opacity: 0.7;
         }
 
-        .status {
-            display: inline-block;
+        .card .icon {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .card .tag {
             margin-top: 20px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
             color: var(--accent);
+            display: flex;
+            align-items: center;
         }
 
         footer {
             margin-top: auto;
             padding: 40px;
-            opacity: 0.4;
-            font-size: 0.8rem;
+            opacity: 0.5;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 2rem; }
+            .grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>IS115 TOOLBOX</h1>
-    <p>Algorithms & Programming - Master Navigation</p>
+    <h1>IS115 DASHBOARD</h1>
+    <p>Algorithms and Programming - Course Resources</p>
 </header>
 
-<div class="dashboard-grid">
-    <a href="random_picker.html" class="card">
-        <div>
-            <h2>Student Random Picker</h2>
-            <p>Select individual students using 3D Soap Bubble animation and hand-tracking gestures.</p>
-        </div>
-        <span class="status">Open App →</span>
+<div class="category-title">Class Management</div>
+<div class="grid">
+    <a href="IS115.html" class="card">
+        <span class="icon">👤</span>
+        <h3>Student Selection</h3>
+        <p>3D Soap Bubble random picker for choosing individual students.</p>
+        <div class="tag">OPEN TOOL →</div>
     </a>
-
-    <a href="group_randomizer.html" class="card">
-        <div>
-            <h2>Group Randomizer</h2>
-            <p>Automatically assign students into pairs (or groups of 3) and export results to text files.</p>
-        </div>
-        <span class="status">Open App →</span>
+    <a href="IS115-group.html" class="card">
+        <span class="icon">👥</span>
+        <h3>Group Assignment</h3>
+        <p>Randomly assign students into pairs or groups of 3 with export features.</p>
+        <div class="tag">OPEN TOOL →</div>
     </a>
+</div>
 
-    <a href="stack_queue_viz.html" class="card">
-        <div>
-            <h2>Stack & Queue Viz</h2>
-            <p>Interactive visualization of LIFO and FIFO data structures using pinch gestures.</p>
-        </div>
-        <span class="status">Open App →</span>
+<div class="category-title">Searching Visualizers</div>
+<div class="grid">
+    <a href="linear-binarySearch.html" class="card">
+        <span class="icon">🔍</span>
+        <h3>Linear & Binary Search</h3>
+        <p>Comparative visualization of basic searching logic.</p>
+        <div class="tag">VIEW VIZ →</div>
     </a>
+    <a href="BiSearchv2.html" class="card">
+        <span class="icon">📈</span>
+        <h3>Binary Search (v2)</h3>
+        <p>Advanced step-by-step breakdown of the binary search process.</p>
+        <div class="tag">VIEW VIZ →</div>
+    </a>
+    <a href="Ternary%20Search.html" class="card">
+        <span class="icon">🔱</span>
+        <h3>Ternary Search</h3>
+        <p>Visualizing the three-way divide and conquer strategy.</p>
+        <div class="tag">VIEW VIZ →</div>
+    </a>
+    <a href="USCv2.html" class="card">
+        <span class="icon">🛰️</span>
+        <h3>Uniform Cost Search</h3>
+        <p>Visualizing pathfinding and optimal search strategies.</p>
+        <div class="tag">VIEW VIZ →</div>
+    </a>
+</div>
 
-    <a href="debug.html" class="card">
-        <div>
-            <h2>Hand Tracking Debug</h2>
-            <p>Technical diagnostic tool to check camera input and MediaPipe skeleton detection.</p>
-        </div>
-        <span class="status">Diagnostics →</span>
+<div class="category-title">Graphs, Sorting & Logic</div>
+<div class="grid">
+    <a href="BFS-graph.html" class="card">
+        <span class="icon">🕸️</span>
+        <h3>BFS & DFS (Graph v2)</h3>
+        <p>Complete graph traversal visualization for Breadth/Depth First Search.</p>
+        <div class="tag">VIEW VIZ →</div>
+    </a>
+    <a href="BFSDFS.html" class="card">
+        <span class="icon">📍</span>
+        <h3>BFS & DFS (v1)</h3>
+        <p>Initial logic visualization for graph searching.</p>
+        <div class="tag">VIEW VIZ →</div>
+    </a>
+    <a href="sortingv2.html" class="card">
+        <span class="icon">📊</span>
+        <h3>Insertion & Merge Sort</h3>
+        <p>Visualizing sorting complexity and algorithm efficiency.</p>
+        <div class="tag">VIEW VIZ →</div>
+    </a>
+    <a href="stackQueue.html" class="card">
+        <span class="icon">📦</span>
+        <h3>Stack & Queue</h3>
+        <p>Visualization of LIFO and FIFO data structure concepts.</p>
+        <div class="tag">VIEW VIZ →</div>
+    </a>
+    <a href="hashmap.html" class="card">
+        <span class="icon">🔑</span>
+        <h3>Hashmap Visualization</h3>
+        <p>Understanding key-value storage and collision logic.</p>
+        <div class="tag">VIEW VIZ →</div>
+    </a>
+    <a href="heap.html" class="card">
+        <span class="icon">🌳</span>
+        <h3>Heap Structure</h3>
+        <p>Visualizing binary heaps and priority queue properties.</p>
+        <div class="tag">VIEW VIZ →</div>
     </a>
 </div>
 
 <footer>
-    &copy; 2026 IS115 - Algorithms and Programming
+    &copy; 2026 - Algorithms & Programming (IS115) Dashboard
 </footer>
 
 </body>
