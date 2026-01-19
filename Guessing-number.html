@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Search: John vs Mary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .range-bar { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .number-node { transition: all 0.3s ease; }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Speech Bubble Tail */
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 20px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: #f1f5f9 transparent;
+            display: block;
+            width: 0;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+
+    <!-- Setup Screen -->
+    <div id="setup-screen" class="bg-white shadow-2xl rounded-3xl p-8 max-w-md w-full border border-slate-100">
+        <div class="text-center mb-8">
+            <div class="bg-blue-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-800">Guessing Number Game</h1>
+            <p class="text-slate-500 mt-2">Mary thinks of a number, John finds it using Binary Search.</p>
+        </div>
+
+        <div class="space-y-6">
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Upper Limit (n)</label>
+                <input type="number" id="input-n" value="100" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="e.g., 1000">
+                <p class="text-xs text-slate-400 mt-2">Pick a range (1 to n). Larger numbers showcase the power of Binary Search!</p>
+            </div>
+
+            <button onclick="startGame()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95">
+                Start Game
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="hidden bg-white shadow-2xl rounded-3xl p-8 max-w-4xl w-full border border-slate-100">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center text-2xl">👨‍💻</div>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">John</h2>
+                    <p class="text-xs text-slate-400 uppercase font-bold tracking-widest">Binary Search Mode</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Question Count</div>
+                <div id="guess-counter" class="text-2xl font-bold text-blue-600">0</div>
+            </div>
+        </div>
+
+        <!-- John's Speech Area -->
+        <div class="mb-8 relative">
+            <div id="john-speech" class="speech-bubble bg-slate-100 p-6 rounded-2xl text-lg text-slate-700 font-medium relative fade-in">
+                <!-- John's dialogue will be injected here -->
+            </div>
+        </div>
+
+        <!-- Visualization -->
+        <div class="mb-12">
+            <div class="flex justify-between text-xs font-bold text-slate-400 mb-2 px-1">
+                <span>1</span>
+                <span id="label-n">100</span>
+            </div>
+            <div class="relative h-12 bg-slate-100 rounded-full overflow-hidden flex items-center">
+                <!-- Inactive Ranges -->
+                <div id="lower-dead-zone" class="h-full bg-slate-200 transition-all duration-500" style="width: 0%"></div>
+                <!-- Active Search Space -->
+                <div id="active-range" class="h-full bg-blue-500 range-bar relative flex items-center justify-center min-w-[2px]">
+                    <div id="mid-marker" class="absolute h-16 w-1 bg-red-500 shadow-xl z-10 flex flex-col items-center">
+                        <div class="bg-red-500 text-white text-[10px] px-2 py-1 rounded absolute -top-8 font-bold whitespace-nowrap">Pivot</div>
+                    </div>
+                </div>
+                <div id="upper-dead-zone" class="h-full bg-slate-200 transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between mt-4 text-sm font-medium">
+                <span id="low-val" class="text-blue-600 font-bold">1</span>
+                <span id="range-desc" class="text-slate-400">Possible Range</span>
+                <span id="high-val" class="text-blue-600 font-bold">100</span>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div id="controls" class="grid grid-cols-2 gap-4 mb-8">
+            <button onclick="handleAnswer(true)" class="group flex flex-col items-center p-6 rounded-2xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all active:scale-95">
+                <span class="text-3xl mb-1">👍</span>
+                <span class="font-bold text-slate-700 text-xl">Yes</span>
+            </button>
+            <button onclick="handleAnswer(false)" class="group flex flex-col items-center p-6 rounded-2xl border-2 border-slate-100 hover:border-red-500 hover:bg-red-50 transition-all active:scale-95">
+                <span class="text-3xl mb-1">👎</span>
+                <span class="font-bold text-slate-700 text-xl">No</span>
+            </button>
+        </div>
+
+        <!-- History -->
+        <div class="bg-slate-50 rounded-2xl p-6">
+            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Conversation History</h3>
+            <div id="history-container" class="space-y-2 max-h-40 overflow-y-auto pr-2">
+                <!-- History items injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Win Modal -->
+    <div id="win-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center fade-in">
+            <div class="text-6xl mb-4">🏆</div>
+            <h2 class="text-2xl font-bold text-slate-800">John Found It!</h2>
+            <p class="text-slate-500 mt-2">He deduced your number is <span id="final-number" class="font-bold text-blue-600">--</span> in exactly <span id="final-guesses" class="font-bold text-blue-600">--</span> questions.</p>
+            <div class="mt-8 space-y-3">
+                <button onclick="resetGame()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let n = 100;
+        let low = 1;
+        let high = 100;
+        let currentPivot = 0;
+        let guesses = 0;
+        let isGameOver = false;
+
+        function startGame() {
+            const inputVal = parseInt(document.getElementById('input-n').value);
+            if (isNaN(inputVal) || inputVal < 2) {
+                alert("Please enter a number greater than 1.");
+                return;
+            }
+            n = inputVal;
+            resetVariables();
+            
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            
+            document.getElementById('label-n').innerText = n;
+            
+            nextQuestion();
+        }
+
+        function resetVariables() {
+            low = 1;
+            high = n;
+            guesses = 0;
+            isGameOver = false;
+            document.getElementById('history-container').innerHTML = '';
+            document.getElementById('guess-counter').innerText = '0';
+        }
+
+        function updateJohnSpeech(text) {
+            const speechBox = document.getElementById('john-speech');
+            speechBox.classList.remove('fade-in');
+            void speechBox.offsetWidth; // Trigger reflow
+            speechBox.innerHTML = text;
+            speechBox.classList.add('fade-in');
+        }
+
+        function nextQuestion() {
+            if (low === high) {
+                finishGame();
+                return;
+            }
+
+            guesses++;
+            document.getElementById('guess-counter').innerText = guesses;
+            
+            // Binary search: Check if number is bigger than the floor of (low + high) / 2
+            currentPivot = Math.floor((low + high - 1) / 2);
+            
+            updateJohnSpeech(`Hey Mary, I'm thinking... is your number <span class="text-blue-600 font-bold">bigger than ${currentPivot}</span>?`);
+            updateDisplay();
+        }
+
+        function handleAnswer(isBigger) {
+            if (isGameOver) return;
+
+            const responseText = isBigger ? "Yes" : "No";
+            addToHistory(currentPivot, responseText);
+
+            if (isBigger) {
+                low = currentPivot + 1;
+            } else {
+                high = currentPivot;
+            }
+
+            nextQuestion();
+        }
+
+        function finishGame() {
+            isGameOver = true;
+            updateJohnSpeech(`Aha! I've got it! Mary, your number must be <span class="text-blue-600 font-bold text-2xl">${low}</span>!`);
+            updateDisplay();
+            
+            // Brief delay before showing win modal
+            setTimeout(() => {
+                showWin();
+            }, 1500);
+        }
+
+        function updateDisplay() {
+            document.getElementById('low-val').innerText = low;
+            document.getElementById('high-val').innerText = high;
+
+            const total = n;
+            const lowPct = ((low - 1) / total) * 100;
+            const activePct = ((high - low + 1) / total) * 100;
+            const highPct = (1 - (high / total)) * 100;
+
+            document.getElementById('lower-dead-zone').style.width = lowPct + '%';
+            document.getElementById('active-range').style.width = activePct + '%';
+            document.getElementById('upper-dead-zone').style.width = highPct + '%';
+
+            // Pivot marker logic
+            const midInActive = (currentPivot - low) / (high - low + 1) * 100;
+            document.getElementById('mid-marker').style.left = Math.max(0, Math.min(100, midInActive)) + '%';
+            document.getElementById('mid-marker').style.display = (low === high) ? 'none' : 'flex';
+        }
+
+        function addToHistory(pivot, answer) {
+            const container = document.getElementById('history-container');
+            const item = document.createElement('div');
+            item.className = 'flex justify-between text-xs bg-white p-2 rounded-lg border border-slate-100 shadow-sm fade-in';
+            item.innerHTML = `
+                <span class="font-bold text-slate-700">Q${guesses}: Bigger than ${pivot}?</span>
+                <span class="text-blue-500 font-bold">${answer}</span>
+            `;
+            container.prepend(item);
+        }
+
+        function showWin() {
+            document.getElementById('final-number').innerText = low;
+            document.getElementById('final-guesses').innerText = guesses;
+            document.getElementById('win-modal').classList.remove('hidden');
+        }
+
+        function resetGame() {
+            document.getElementById('win-modal').classList.add('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('setup-screen').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
