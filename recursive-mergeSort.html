@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge Sort Visualizer - Tree View</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Fira+Code:wght@400;500&display=swap');
+
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #38bdf8;
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+
+        .node {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .array-box {
+            fill: #1e293b;
+            stroke: #334155;
+            stroke-width: 1.5;
+            transition: all 0.3s;
+        }
+
+        .node.active .array-box {
+            stroke: var(--accent);
+            fill: #0f172a;
+        }
+
+        .node.merging .array-box {
+            stroke: #fbbf24;
+            filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.4));
+        }
+
+        .node.completed .array-box {
+            fill: #064e3b;
+            stroke: #10b981;
+        }
+
+        .edge {
+            stroke: #334155;
+            stroke-width: 1.5;
+            fill: none;
+            transition: stroke 0.3s, stroke-width 0.3s;
+        }
+
+        .edge.active {
+            stroke: var(--accent);
+            stroke-width: 2;
+        }
+
+        .cell-text {
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* Custom Scrollbar for the legend */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 backdrop-blur-md z-50">
+        <div>
+            <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-indigo-400">
+                Merge Sort Visualizer
+            </h1>
+            <p class="text-slate-400 text-sm">Recursive Tree Visualization</p>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 bg-slate-800 rounded-lg p-1">
+                <label class="text-xs px-2 text-slate-400">Array Size:</label>
+                <input type="number" id="n-input" value="8" min="2" max="16" 
+                    class="w-12 bg-slate-900 border-none rounded text-center text-sky-400 focus:ring-1 focus:ring-sky-500 outline-none p-1">
+            </div>
+            <button id="start-btn" class="bg-sky-500 hover:bg-sky-400 text-white px-6 py-2 rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-sky-500/20">
+                Start Animation
+            </button>
+            <button id="reset-btn" class="text-slate-400 hover:text-white px-2 transition-colors">
+                Reset
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 relative overflow-hidden bg-slate-950">
+        <!-- Floating Legend -->
+        <div class="absolute top-6 left-6 z-10 p-4 rounded-xl bg-slate-900/80 backdrop-blur border border-slate-800 shadow-xl pointer-events-none">
+            <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 tracking-widest">Status Guide</h4>
+            <div class="space-y-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 rounded-sm bg-sky-500 shadow-sm shadow-sky-500/50"></div>
+                    <span class="text-xs text-slate-300">Splitting / Active Call</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 rounded-sm bg-amber-400 shadow-sm shadow-amber-400/50"></div>
+                    <span class="text-xs text-slate-300">Merging Elements</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 rounded-sm bg-emerald-500 shadow-sm shadow-emerald-500/50"></div>
+                    <span class="text-xs text-slate-300">Sorted Segment</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="viz-container" class="w-full h-full">
+            <svg id="canvas" class="w-full h-full">
+                <g id="edges-group"></g>
+                <g id="nodes-group"></g>
+            </svg>
+        </div>
+        
+        <!-- Controls Overlay -->
+        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-6 bg-slate-900/90 backdrop-blur border border-slate-700 p-4 rounded-2xl shadow-2xl">
+            <div class="flex items-center gap-3">
+                <span class="text-xs text-slate-400 font-medium">Speed</span>
+                <input type="range" id="speed-slider" min="100" max="2000" value="1500" step="100" class="w-48 accent-sky-500">
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const nodesGroup = document.getElementById('nodes-group');
+        const edgesGroup = document.getElementById('edges-group');
+        const startBtn = document.getElementById('start-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const nInput = document.getElementById('n-input');
+        const speedSlider = document.getElementById('speed-slider');
+
+        let isRunning = false;
+        let nodeCounter = 0;
+
+        const config = {
+            cellWidth: 26,
+            cellHeight: 32,
+            levelHeight: 120,
+        };
+
+        const sleep = () => new Promise(res => setTimeout(res, 2105 - speedSlider.value));
+
+        function clearUI() {
+            nodesGroup.innerHTML = '';
+            edgesGroup.innerHTML = '';
+            nodeCounter = 0;
+        }
+
+        function createArrayNode(arr, x, y, id) {
+            const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            group.setAttribute('id', id);
+            group.setAttribute('class', 'node active');
+            
+            const totalWidth = arr.length * config.cellWidth;
+            const startX = x - totalWidth / 2;
+
+            arr.forEach((val, i) => {
+                const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                rect.setAttribute('x', startX + i * config.cellWidth);
+                rect.setAttribute('y', y);
+                rect.setAttribute('width', config.cellWidth - 2); // Slight gap between cells
+                rect.setAttribute('height', config.cellHeight);
+                rect.setAttribute('rx', '4');
+                rect.setAttribute('class', 'array-box');
+                rect.setAttribute('id', `${id}-cell-${i}`);
+                
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute('x', startX + i * config.cellWidth + config.cellWidth / 2 - 1);
+                text.setAttribute('y', y + config.cellHeight / 2 + 4);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('fill', 'white');
+                text.setAttribute('class', 'cell-text code-font');
+                text.setAttribute('id', `${id}-text-${i}`);
+                text.textContent = val;
+
+                group.appendChild(rect);
+                group.appendChild(text);
+            });
+
+            return group;
+        }
+
+        async function visualizeMergeSort(arr, x, y, width, parentX = null, parentY = null) {
+            if (!isRunning) return null;
+
+            const nodeId = `node-${nodeCounter++}`;
+            const group = createArrayNode(arr, x, y, nodeId);
+            nodesGroup.appendChild(group);
+            
+            if (parentX !== null) {
+                const edge = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                edge.setAttribute('x1', parentX);
+                edge.setAttribute('y1', parentY + config.cellHeight);
+                edge.setAttribute('x2', x);
+                edge.setAttribute('y2', y);
+                edge.setAttribute('class', 'edge active');
+                edge.setAttribute('id', `edge-${nodeId}`);
+                edgesGroup.appendChild(edge);
+            }
+
+            await sleep();
+            if (!isRunning) return null;
+
+            // Base Case: Array of size 1 is already sorted
+            if (arr.length <= 1) {
+                await sleep();
+                group.classList.remove('active');
+                group.classList.add('completed');
+                const edge = document.getElementById(`edge-${nodeId}`);
+                if (edge) edge.classList.remove('active');
+                return arr;
+            }
+
+            // Divide phase
+            const mid = Math.floor(arr.length / 2);
+            const leftArr = arr.slice(0, mid);
+            const rightArr = arr.slice(mid);
+
+            // Recurse Downward
+            const sortedLeft = await visualizeMergeSort(leftArr, x - width / 4, y + config.levelHeight, width / 2, x, y);
+            if (!isRunning) return null;
+
+            const sortedRight = await visualizeMergeSort(rightArr, x + width / 4, y + config.levelHeight, width / 2, x, y);
+            if (!isRunning) return null;
+
+            // Conquer (Merge) phase
+            group.classList.remove('active');
+            group.classList.add('merging');
+            await sleep();
+
+            const merged = [];
+            let i = 0, j = 0;
+            
+            while (i < sortedLeft.length || j < sortedRight.length) {
+                if (!isRunning) return null;
+                
+                if (j >= sortedRight.length || (i < sortedLeft.length && sortedLeft[i] <= sortedRight[j])) {
+                    merged.push(sortedLeft[i]);
+                    i++;
+                } else {
+                    merged.push(sortedRight[j]);
+                    j++;
+                }
+                
+                // Update node visual to show progress of merging
+                for(let k = 0; k < merged.length; k++) {
+                    const textEl = document.getElementById(`${nodeId}-text-${k}`);
+                    if (textEl) textEl.textContent = merged[k];
+                }
+                await sleep();
+            }
+
+            group.classList.remove('merging');
+            group.classList.add('completed');
+            
+            const edge = document.getElementById(`edge-${nodeId}`);
+            if (edge) edge.classList.remove('active');
+            
+            await sleep();
+            return merged;
+        }
+
+        async function initVisualization() {
+            if (isRunning) return;
+            isRunning = true;
+            startBtn.disabled = true;
+            startBtn.classList.add('opacity-50');
+            
+            clearUI();
+            
+            const n = parseInt(nInput.value);
+            const arr = Array.from({length: n}, () => Math.floor(Math.random() * 99) + 1);
+            
+            const centerX = canvas.clientWidth / 2;
+            const startY = 60;
+            // Scale width based on depth of recursion to prevent overlap
+            const startWidth = Math.min(canvas.clientWidth * 0.95, n * 140);
+
+            try {
+                await visualizeMergeSort(arr, centerX, startY, startWidth);
+            } catch (e) {
+                console.error("Animation interrupted:", e);
+            } finally {
+                isRunning = false;
+                startBtn.disabled = false;
+                startBtn.classList.remove('opacity-50');
+            }
+        }
+
+        startBtn.addEventListener('click', initVisualization);
+        resetBtn.addEventListener('click', () => {
+            isRunning = false;
+            setTimeout(clearUI, 50);
+        });
+
+        // Auto-clear on resize to keep SVG centering consistent
+        window.addEventListener('resize', () => {
+            if (!isRunning) clearUI();
+        });
+
+        window.onload = clearUI;
+    </script>
+</body>
+</html>
