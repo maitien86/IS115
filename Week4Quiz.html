@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 4 Quiz: Counting & Complexity</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .option-card:hover:not(:disabled) {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .correct {
+            border-color: #22c55e !important;
+            background-color: #f0fdf4 !important;
+            color: #166534 !important;
+            font-weight: 600;
+        }
+        .incorrect {
+            border-color: #ef4444 !important;
+            background-color: #fef2f2 !important;
+            color: #991b1b !important;
+        }
+        pre {
+            background-color: #1e293b;
+            color: #f8fafc;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-size: 0.875rem;
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-3xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-slate-800">Week 4 Quiz</h1>
+            <p class="text-slate-600 mt-2">Counting, Big O Complexity, and Recursive Analysis</p>
+            <div id="live-score" class="mt-4 inline-block bg-slate-200 px-4 py-1 rounded-full text-sm font-semibold text-slate-700">
+                Score: 0 / 0
+            </div>
+        </header>
+
+        <div id="quiz-container" class="space-y-8">
+            <!-- Questions will be injected here -->
+        </div>
+
+        <div class="mt-12 mb-20 text-center">
+            <div id="results" class="hidden p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
+                <h2 class="text-2xl font-bold mb-2" id="score-display"></h2>
+                <p class="text-slate-600">You've completed the quiz! Review the rationales above for any missed questions.</p>
+                <button onclick="window.location.reload()" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Restart Quiz</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                q: "(Counting) Seven students, including Alice and Bob, are to be arranged in a single row for a photograph. Determine the number of possible linear arrangements where Alice and Bob are not standing beside one another.",
+                options: ["720", "1,440", "3,600", "5,040"],
+                correct: 2,
+                rationale: "Total arrangements are $7! = 5,040$. Subtract the cases where Alice and Bob are together ($6! \\times 2! = 1,440$). $5,040 - 1,440 = 3,600$."
+            },
+            {
+                q: "(Counting) A string of 10 bits (0s and 1s) is generated. How many such strings contain exactly 4 zeros?",
+                options: ["120", "210", "1,024", "5,040"],
+                correct: 1,
+                rationale: "The number of ways to choose the 4 positions for the zeros out of the 10 available slots is $C(10,4) = 210$."
+            },
+            {
+                q: "(Counting) An employee ID consists of two uppercase English letters followed by three digits. How many unique IDs can be created if repetition is allowed?",
+                options: ["520", "260,000", "676,000", "1,000,000"],
+                correct: 2,
+                rationale: "Applying the product rule, there are $26 \\times 26$ ways to choose the letters and $10 \\times 10 \\times 10$ ways to choose the digits."
+            },
+            {
+                q: "What is the minimum number of students required in a room to guarantee that at least two of them were born in the same month?",
+                options: ["12", "13", "24", "366"],
+                correct: 1,
+                rationale: "There are 12 possible months (the 'holes'). To guarantee at least one month has two students (the 'pigeons'), you need $n+1$ students, which is $12+1=13$."
+            },
+            {
+                q: "(Complexity) What is the Big O complexity of the following function?",
+                code: "def example_a(n):\n  for i in range(n):\n    for j in range(50):\n      print(i + j)",
+                options: ["O(1)", "O(n)", "O(50n)", "O(n^2)"],
+                correct: 1,
+                rationale: "The outer loop runs $n$ times, while the inner loop runs a fixed constant of 50 times. Since constants are ignored in Big O notation, the growth rate is linear relative to $n$."
+            },
+            {
+                q: "(Complexity) Analyze the time complexity of the following code snippet:",
+                code: "def example_c(n):\n  i = 1\n  while i < n:\n    print(i)\n    i = i * 2",
+                options: ["O(log n)", "O(n)", "O(n log n)", "O(2^n)"],
+                correct: 0,
+                rationale: "The loop variable doubles with each iteration. The number of steps required for a value to reach $n$ via doubling is logarithmic."
+            },
+            {
+                q: "(Complexity) What is the Big O complexity of this nested loop structure?",
+                code: "def example_e(n):\n  for i in range(n):\n    for j in range(i):\n       print(i+j)",
+                options: ["O(n)", "O(log n)", "O(n^2)", "O(n^3)"],
+                correct: 2,
+                rationale: "The total number of iterations is the sum of integers from 0 to $n-1$. This is expressed as $\\frac{n(n-1)}{2}$. When simplified for Big O, we drop the constant coefficients and lower-order terms, leaving $O(n^2)$."
+            },
+            {
+                q: "For the array x = [10, 20, 30, 40, 50, 60, 70, 80], which algorithm performs fewer comparisons?",
+                options: ["Insertion Sort", "Merge Sort", "They are equal"],
+                correct: 0,
+                rationale: "Insertion Sort recognizes the array is already sorted and completes in $O(n)$ time with only $n-1$ comparisons. Merge Sort always takes $O(n \\log n)$ regardless of initial order."
+            },
+            {
+                q: "For the array x = [80, 20, 40, 10, 70, 30, 60, 50], what is its state just before the final merge step in Merge Sort?",
+                options: [
+                    "[10, 20, 30, 40, 50, 60, 70, 80]",
+                    "[10, 20, 40, 80, 30, 50, 60, 70]",
+                    "[20, 80, 10, 40, 30, 70, 50, 60]",
+                    "[20, 80, 10, 50, 40, 70, 50, 60]"
+                ],
+                correct: 1,
+                rationale: "Merge Sort recursively sorts the left half and the right half. The left half [80, 20, 40, 10] becomes [10, 20, 40, 80]. The right half [70, 30, 60, 50] becomes [30, 50, 60, 70]."
+            },
+            {
+                q: "Assuming a function power(x, n) exists that computes x^n, what is the appropriate return statement for a recursive function designed to calculate the sum f(x, n) = x^1 + x^2 + … + x^n?",
+                options: [
+                    "return x * power(x, n-1)",
+                    "return power(x, n) + f_rec(x, n-1)",
+                    "return power(x, n) * f_rec(x, n-1)",
+                    "return f_rec(power(x, n), n-1)"
+                ],
+                correct: 1,
+                rationale: "The total sum is the current power ($x^n$) plus the sum of all previous powers ($x^1$ through $x^{n-1}$)."
+            },
+            {
+                q: "Suppose sub_function has linear complexity O(n). What is the complexity of my_function?",
+                code: "def my_function(n):\n    if (n > 0):\n        sub_function(n)\n        my_function(n // 2)",
+                options: ["O(log n)", "O(n)", "O(n log n)", "O(n^2)"],
+                correct: 1,
+                rationale: "The total work is the sum of a geometric series: $n + n/2 + n/4 + \\dots + 1$. This sum converges to approximately $2n$, which simplifies to $O(n)$."
+            },
+            {
+                q: "What is the Big O complexity of the following function?",
+                code: "def function_c(n):\n    if n > 0:\n        for i in range(n):\n            print(i)\n        function_c(n - 1)",
+                options: ["O(n)", "O(n log n)", "O(n^2)", "O(2^n)"],
+                correct: 2,
+                rationale: "The function performs $n$ work in the first call, $n-1$ in the second, etc. The total work is the sum of an arithmetic series: $n + (n-1) + \\dots + 1 = \\frac{n(n+1)}{2}$, which is $O(n^2)$."
+            },
+            {
+                q: "Six people are to be seated at a round table. Two of them, Alice and Bob, insist on sitting together, but the other two Charlie and David refuse to sit next to each other. How many valid arrangements exist?",
+                options: ["12", "24", "48", "120"],
+                correct: 1,
+                rationale: "Total ways with A & B together: $2! \\times (5-1)! = 48$. Ways where both pairs are together: $2! \\times 2! \\times (4-1)! = 24$. $48 - 24 = 24$."
+            }
+        ];
+
+        let questionsAnswered = 0;
+        let score = 0;
+        let answeredStatus = new Array(quizData.length).fill(false);
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = quizData.map((data, qIdx) => `
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition-all overflow-hidden" id="q-container-${qIdx}">
+                    <div class="flex items-start gap-4">
+                        <span id="q-number-${qIdx}" class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500">${qIdx + 1}</span>
+                        <div class="flex-grow">
+                            <p class="text-lg text-slate-800 font-medium mb-4">${data.q}</p>
+                            ${data.code ? `<pre><code>${data.code}</code></pre>` : ''}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                                ${data.options.map((opt, oIdx) => `
+                                    <button 
+                                        onclick="handleSelection(${qIdx}, ${oIdx})"
+                                        id="q-${qIdx}-opt-${oIdx}"
+                                        class="option-card p-4 rounded-lg border border-slate-200 text-left transition-all text-slate-700 disabled:cursor-default"
+                                    >
+                                        <span class="inline-block w-6 text-slate-400 font-bold">${String.fromCharCode(65 + oIdx)})</span>
+                                        ${opt}
+                                    </button>
+                                `).join('')}
+                            </div>
+                            <div id="rationale-${qIdx}" class="hidden mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded text-slate-700 text-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                                <div class="font-bold text-blue-800 mb-1">Explanation:</div>
+                                ${data.rationale}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function handleSelection(qIdx, oIdx) {
+            if (answeredStatus[qIdx]) return;
+            
+            answeredStatus[qIdx] = true;
+            questionsAnswered++;
+            const correctAns = quizData[qIdx].correct;
+            const isCorrect = oIdx === correctAns;
+
+            if (isCorrect) score++;
+
+            // Update UI for all buttons in this question
+            quizData[qIdx].options.forEach((_, i) => {
+                const btn = document.getElementById(`q-${qIdx}-opt-${i}`);
+                btn.disabled = true;
+                if (i === correctAns) {
+                    btn.classList.add('correct');
+                } else if (i === oIdx) {
+                    btn.classList.add('incorrect');
+                }
+            });
+
+            // Update question number icon
+            const numIcon = document.getElementById(`q-number-${qIdx}`);
+            numIcon.classList.remove('bg-slate-100', 'text-slate-500');
+            numIcon.classList.add(isCorrect ? 'bg-green-500' : 'bg-red-500', 'text-white');
+
+            // Show rationale
+            document.getElementById(`rationale-${qIdx}`).classList.remove('hidden');
+
+            // Update live score display
+            document.getElementById('live-score').innerText = `Score: ${score} / ${questionsAnswered}`;
+
+            // Check if finished
+            if (questionsAnswered === quizData.length) {
+                showFinalResults();
+            }
+        }
+
+        function showFinalResults() {
+            const resultsDiv = document.getElementById('results');
+            const scoreDisplay = document.getElementById('score-display');
+            resultsDiv.classList.remove('hidden');
+            scoreDisplay.innerText = `Final Score: ${score} / ${quizData.length} (${Math.round((score/quizData.length)*100)}%)`;
+            window.scrollTo({ top: resultsDiv.offsetTop - 100, behavior: 'smooth' });
+        }
+
+        // Initialize
+        renderQuiz();
+    </script>
+</body>
+</html>
