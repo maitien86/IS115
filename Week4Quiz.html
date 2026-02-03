@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Week 4 Quiz: Counting & Complexity</title>
+    <title>IS115 Quiz - Week 4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
+            background-color: #f1f5f9;
         }
         .option-card:hover:not(:disabled) {
             border-color: #3b82f6;
@@ -20,11 +20,27 @@
             background-color: #f0fdf4 !important;
             color: #166534 !important;
             font-weight: 600;
+            position: relative;
+        }
+        .correct::after {
+            content: "✓ Correct";
+            position: absolute;
+            right: 1rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
         }
         .incorrect {
             border-color: #ef4444 !important;
             background-color: #fef2f2 !important;
             color: #991b1b !important;
+            position: relative;
+        }
+        .incorrect::after {
+            content: "✕ Your Pick";
+            position: absolute;
+            right: 1rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
         }
         pre {
             background-color: #1e293b;
@@ -33,32 +49,63 @@
             border-radius: 0.5rem;
             overflow-x: auto;
             font-size: 0.875rem;
-            margin: 0.5rem 0;
+            margin: 0.75rem 0;
+            border-left: 4px solid #3b82f6;
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
-    <div class="max-w-3xl mx-auto">
-        <header class="mb-8 text-center">
-            <h1 class="text-3xl font-bold text-slate-800">Week 4 Quiz</h1>
-            <p class="text-slate-600 mt-2">Counting, Big O Complexity, and Recursive Analysis</p>
-            <div id="live-score" class="mt-4 inline-block bg-slate-200 px-4 py-1 rounded-full text-sm font-semibold text-slate-700">
-                Score: 0 / 0
+<body class="min-h-screen flex flex-col">
+
+    <!-- Academic Header -->
+    <header class="bg-white border-b border-slate-200 pt-8 pb-6 px-4 shadow-sm">
+        <div class="max-w-3xl mx-auto flex flex-col items-center text-center">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider">IS115</span>
+                <span class="text-slate-500 font-medium text-sm">Algorithms and Programming</span>
             </div>
-        </header>
-
-        <div id="quiz-container" class="space-y-8">
-            <!-- Questions will be injected here -->
-        </div>
-
-        <div class="mt-12 mb-20 text-center">
-            <div id="results" class="hidden p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
-                <h2 class="text-2xl font-bold mb-2" id="score-display"></h2>
-                <p class="text-slate-600">You've completed the quiz! Review the rationales above for any missed questions.</p>
-                <button onclick="window.location.reload()" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Restart Quiz</button>
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Week 4 Quiz: Counting & Complexity</h1>
+            <p class="text-slate-600 mt-2 font-medium">Designed by <span class="text-blue-700">Prof. Mai Anh Tien</span></p>
+            
+            <div id="live-score" class="mt-6 inline-flex items-center gap-2 bg-slate-100 px-5 py-2 rounded-full text-sm font-bold text-slate-700 border border-slate-200">
+                <span id="score-text">Progress: 0 / 13 Questions</span>
             </div>
         </div>
-    </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-4 md:p-8">
+        <div id="quiz-container" class="max-w-3xl mx-auto space-y-6">
+            <!-- Questions injected here -->
+        </div>
+
+        <div class="max-w-3xl mx-auto mt-12 mb-10 text-center">
+            <div id="results" class="hidden p-8 bg-white rounded-2xl border border-blue-100 shadow-xl">
+                <h2 class="text-3xl font-bold text-slate-800 mb-2">Quiz Complete!</h2>
+                <div id="score-display" class="text-5xl font-black text-blue-600 my-4"></div>
+                <p class="text-slate-500 mb-6">Review your performance and the rationales provided by Prof. Mai Anh Tien above.</p>
+                <button onclick="window.location.reload()" class="bg-slate-800 text-white px-8 py-3 rounded-xl font-bold hover:bg-slate-900 transition-all shadow-lg hover:shadow-xl active:scale-95">
+                    Retry Quiz
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Academic Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-12 px-4">
+        <div class="max-w-3xl mx-auto text-center border-t border-slate-800 pt-8">
+            <p class="font-bold text-white tracking-wide mb-1">IS115 - ALGORITHMS AND PROGRAMMING</p>
+            <p class="text-sm italic mb-6">Instructional Materials Repository</p>
+            
+            <div class="space-y-1 mb-8">
+                <p class="text-xs uppercase tracking-widest text-slate-500">Academic Lead</p>
+                <p class="text-lg font-semibold text-slate-200">Prof. Mai Anh Tien</p>
+            </div>
+            
+            <div class="text-[10px] text-slate-600 uppercase tracking-widest mt-10">
+                &copy; 2024 Course IS115. All rights reserved for academic use.
+            </div>
+        </div>
+    </footer>
 
     <script>
         const quizData = [
@@ -164,26 +211,31 @@
         function renderQuiz() {
             const container = document.getElementById('quiz-container');
             container.innerHTML = quizData.map((data, qIdx) => `
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition-all overflow-hidden" id="q-container-${qIdx}">
+                <div class="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm transition-all overflow-hidden" id="q-container-${qIdx}">
                     <div class="flex items-start gap-4">
-                        <span id="q-number-${qIdx}" class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500">${qIdx + 1}</span>
+                        <span id="q-number-${qIdx}" class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 transition-colors">${qIdx + 1}</span>
                         <div class="flex-grow">
-                            <p class="text-lg text-slate-800 font-medium mb-4">${data.q}</p>
+                            <p class="text-xl text-slate-800 font-semibold mb-4 leading-relaxed">${data.q}</p>
                             ${data.code ? `<pre><code>${data.code}</code></pre>` : ''}
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                                 ${data.options.map((opt, oIdx) => `
                                     <button 
                                         onclick="handleSelection(${qIdx}, ${oIdx})"
                                         id="q-${qIdx}-opt-${oIdx}"
-                                        class="option-card p-4 rounded-lg border border-slate-200 text-left transition-all text-slate-700 disabled:cursor-default"
+                                        class="option-card p-4 rounded-xl border border-slate-200 text-left transition-all text-slate-700 disabled:cursor-default group"
                                     >
-                                        <span class="inline-block w-6 text-slate-400 font-bold">${String.fromCharCode(65 + oIdx)})</span>
+                                        <span class="inline-block w-6 text-slate-400 font-bold group-hover:text-blue-500 transition-colors">${String.fromCharCode(65 + oIdx)})</span>
                                         ${opt}
                                     </button>
                                 `).join('')}
                             </div>
-                            <div id="rationale-${qIdx}" class="hidden mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded text-slate-700 text-sm animate-in fade-in slide-in-from-top-2 duration-300">
-                                <div class="font-bold text-blue-800 mb-1">Explanation:</div>
+                            <div id="rationale-${qIdx}" class="hidden mt-8 p-5 bg-blue-50 border-l-4 border-blue-500 rounded-lg text-slate-700 leading-relaxed shadow-inner">
+                                <div class="flex items-center gap-2 mb-2 text-blue-800">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span class="font-bold uppercase tracking-wide text-sm">Professor's Explanation</span>
+                                </div>
                                 ${data.rationale}
                             </div>
                         </div>
@@ -202,7 +254,6 @@
 
             if (isCorrect) score++;
 
-            // Update UI for all buttons in this question
             quizData[qIdx].options.forEach((_, i) => {
                 const btn = document.getElementById(`q-${qIdx}-opt-${i}`);
                 btn.disabled = true;
@@ -213,18 +264,13 @@
                 }
             });
 
-            // Update question number icon
             const numIcon = document.getElementById(`q-number-${qIdx}`);
             numIcon.classList.remove('bg-slate-100', 'text-slate-500');
-            numIcon.classList.add(isCorrect ? 'bg-green-500' : 'bg-red-500', 'text-white');
+            numIcon.classList.add(isCorrect ? 'bg-green-600' : 'bg-red-600', 'text-white');
 
-            // Show rationale
             document.getElementById(`rationale-${qIdx}`).classList.remove('hidden');
+            document.getElementById('score-text').innerText = `Progress: ${questionsAnswered} / ${quizData.length} Questions`;
 
-            // Update live score display
-            document.getElementById('live-score').innerText = `Score: ${score} / ${questionsAnswered}`;
-
-            // Check if finished
             if (questionsAnswered === quizData.length) {
                 showFinalResults();
             }
@@ -234,12 +280,12 @@
             const resultsDiv = document.getElementById('results');
             const scoreDisplay = document.getElementById('score-display');
             resultsDiv.classList.remove('hidden');
-            scoreDisplay.innerText = `Final Score: ${score} / ${quizData.length} (${Math.round((score/quizData.length)*100)}%)`;
+            scoreDisplay.innerText = `${score} / ${quizData.length}`;
             window.scrollTo({ top: resultsDiv.offsetTop - 100, behavior: 'smooth' });
         }
 
-        // Initialize
         renderQuiz();
     </script>
 </body>
 </html>
+
