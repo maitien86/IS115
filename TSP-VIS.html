@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TSP Algorithm Visualizations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .card-hover:hover {
+            transform: translateY(-4px);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-indigo-600 text-white shadow-md py-12 px-6 mb-8 text-center shrink-0">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-200"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 1 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+            </div>
+            <h1 class="text-4xl font-extrabold mb-3">Traveling Salesperson Problem</h1>
+            <p class="text-indigo-100 text-lg">Interactive Algorithm Visualizations & Comparisons</p>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="max-w-6xl mx-auto px-6 pb-16 flex-1 w-full">
+        
+        <div class="mb-8">
+            <h2 class="text-xl font-bold text-slate-700 border-b border-slate-200 pb-2">Individual Algorithms</h2>
+        </div>
+
+        <!-- Row 1: Individual Algorithms -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            
+            <!-- 1st Greedy -->
+            <a href="1stGreedy-v2.html" class="card-hover bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-200 p-6 flex flex-col transition-all block group cursor-pointer">
+                <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">1st Greedy Algorithm</h3>
+                <p class="text-sm text-slate-500 mb-4 flex-1">Nearest Neighbor heuristic. Builds a path step-by-step by always selecting the closest unvisited city from the last selected city.</p>
+                <div class="text-emerald-600 text-sm font-semibold flex items-center gap-1">
+                    Open Visualization <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </div>
+            </a>
+
+            <!-- 2nd Greedy -->
+            <a href="2ndGreedy.html" class="card-hover bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-200 p-6 flex flex-col transition-all block group cursor-pointer">
+                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 8v8"/></svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">2nd Greedy Algorithm</h3>
+                <p class="text-sm text-slate-500 mb-4 flex-1">Closest Insertion heuristic. Maintains a closed cycle and continuously inserts the unvisited city that results in the lowest overall distance increase.</p>
+                <div class="text-blue-600 text-sm font-semibold flex items-center gap-1">
+                    Open Visualization <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </div>
+            </a>
+
+            <!-- 2-Opt -->
+            <a href="2-opt-v2.html" class="card-hover bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-200 p-6 flex flex-col transition-all block group cursor-pointer">
+                <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3"/><path d="m15 9 6-6"/></svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">2-Opt Local Search</h3>
+                <p class="text-sm text-slate-500 mb-4 flex-1">Edge swap improvement. Scans a random tour for crossing edges and untangles them by reversing sub-tours to reach a local optimum.</p>
+                <div class="text-amber-600 text-sm font-semibold flex items-center gap-1">
+                    Open Visualization <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </div>
+            </a>
+        </div>
+
+        <div class="mb-8 mt-12">
+            <h2 class="text-xl font-bold text-slate-700 border-b border-slate-200 pb-2">Algorithm Comparisons</h2>
+        </div>
+
+        <!-- Row 2: Comparisons -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Standard Comparison -->
+            <a href="compareTSP.html" class="card-hover bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-200 p-6 flex flex-col transition-all block group cursor-pointer">
+                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 mb-2">Side-by-Side Comparison</h3>
+                <p class="text-sm text-slate-500 mb-4 flex-1">Watch all three algorithms (1st Greedy, 2nd Greedy, and 2-Opt) execute simultaneously on a shared, randomized set of nodes.</p>
+                <div class="text-purple-600 text-sm font-semibold flex items-center gap-1">
+                    Open Visualization <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </div>
+            </a>
+
+            <!-- Real World Map Comparison -->
+            <a href="TSP-world.html" class="card-hover bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-200 p-6 flex flex-col transition-all block group cursor-pointer">
+                <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 mb-2">Global Maps Comparison</h3>
+                <p class="text-sm text-slate-500 mb-4 flex-1">Compare the performance of the three algorithms across real-world geographic data, including maps of the US, Southeast Asia, and Europe.</p>
+                <div class="text-rose-600 text-sm font-semibold flex items-center gap-1">
+                    Open Visualization <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </div>
+            </a>
+            
+        </div>
+
+    </main>
+
+    <footer class="text-center text-slate-400 text-sm py-6 bg-slate-100 shrink-0">
+        <p>Ensure all referenced HTML files are saved in the exact same folder as this index file.</p>
+    </footer>
+
+</body>
+</html>
