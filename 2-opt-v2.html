@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2-Opt TSP Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for pseudo-code block */
+        .code-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .code-container::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+            border-radius: 4px;
+        }
+        .code-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .code-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 h-screen flex flex-col font-sans overflow-hidden">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-slate-200 py-4 px-6 flex justify-between items-center z-10 shrink-0">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">2-Opt Algorithm for TSP</h1>
+            <p class="text-sm text-slate-500">Edge Swap (Local Search Improvement) - <span class="text-indigo-600 font-semibold">Interactive</span></p>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex flex-col items-end">
+                <span class="text-xs text-slate-500 uppercase font-semibold">Tour Length</span>
+                <span id="tour-length" class="text-xl font-mono font-bold text-indigo-600">0.00</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden">
+        
+        <!-- Left Panel: Controls & Action Logs -->
+        <aside class="w-full md:w-1/3 lg:w-96 bg-white border-r border-slate-200 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-0">
+            
+            <!-- Controls -->
+            <div class="p-6 border-b border-slate-100 shrink-0 space-y-4">
+                <div class="flex justify-between items-center">
+                    <label for="num-cities" class="text-sm font-medium text-slate-700">Number of Cities:</label>
+                    <span id="num-cities-val" class="text-sm font-bold text-slate-900">15</span>
+                </div>
+                <input type="range" id="num-cities" min="5" max="50" value="15" class="w-full accent-indigo-600">
+                
+                <button id="btn-generate" class="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-colors flex justify-center items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+                    Generate New Tour
+                </button>
+
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button id="btn-play" class="py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors flex justify-center items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        Auto Play
+                    </button>
+                    <button id="btn-step" class="py-2 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors flex justify-center items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                        Next Step
+                    </button>
+                </div>
+                
+                <div class="pt-2 flex items-center gap-3">
+                    <span class="text-xs text-slate-500">Speed:</span>
+                    <input type="range" id="speed" min="1" max="10" value="5" class="flex-1 accent-indigo-600">
+                </div>
+            </div>
+
+            <!-- Algorithm Events & Current Tour Display -->
+            <div class="flex-1 overflow-y-auto p-6 bg-slate-50 flex flex-col">
+                <h3 class="text-xs uppercase font-bold text-slate-400 mb-4 tracking-wider">Algorithm Events</h3>
+                
+                <div class="mb-6 space-y-3">
+                    <div class="bg-amber-50 border border-amber-100 p-3 rounded-lg">
+                        <h4 class="text-[10px] font-bold text-amber-800 uppercase mb-1">Evaluated Edges</h4>
+                        <p id="candidate-edges-text" class="text-sm text-amber-900 font-mono font-medium min-h-[1.25rem]">-</p>
+                    </div>
+                    <div class="bg-emerald-50 border border-emerald-100 p-3 rounded-lg">
+                        <h4 class="text-[10px] font-bold text-emerald-800 uppercase mb-1">Action Taken</h4>
+                        <p id="action-text" class="text-sm text-emerald-900 font-mono font-medium min-h-[1.25rem]">-</p>
+                    </div>
+                </div>
+
+                <div id="status-panel" class="bg-white rounded-lg border border-slate-200 shadow-sm hidden flex-1 flex flex-col">
+                    <div class="p-4 flex-1 flex flex-col">
+                        <div class="flex justify-between items-end mb-2">
+                            <span class="text-xs font-bold text-slate-600">Current Tour T</span>
+                            <span class="text-xs font-medium bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full" id="stat-t">0</span>
+                        </div>
+                        <div id="list-t" class="text-xs font-mono text-indigo-600 bg-indigo-50/30 p-2 rounded border border-indigo-100/50 flex-1 overflow-y-auto break-words leading-relaxed min-h-[10rem]">
+                            [ ]
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right Panel: Canvas Visualization -->
+        <section class="flex-1 relative bg-slate-100 p-4 flex items-center justify-center overflow-hidden" id="canvas-container">
+            <div class="absolute inset-0 z-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px;"></div>
+            <canvas id="tsp-canvas" class="bg-white rounded-xl shadow-md border border-slate-200 z-10 w-full h-full object-contain cursor-grab"></canvas>
+            
+            <!-- Toast Notification -->
+            <div id="toast" class="absolute top-8 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <span id="toast-msg">Local Optimum Reached!</span>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- State Management ---
+        const State = {
+            IDLE: 'IDLE',
+            INIT_TOUR: 'INIT_TOUR',
+            SELECT_EDGES: 'SELECT_EDGES',
+            EVALUATE_MOVE: 'EVALUATE_MOVE',
+            APPLY_MOVE: 'APPLY_MOVE',
+            DONE: 'DONE'
+        };
+
+        let currentState = State.IDLE;
+        let isPlaying = false;
+        let playInterval;
+        
+        let cities = [];
+        let tourT = []; // Array of visited city indices (ordered loop)
+        
+        // Dragging State
+        let draggingNodeIdx = null;
+        
+        // 2-Opt Specific Trackers
+        let candidate_i = 0; 
+        let candidate_j = 2;
+        let best_proposed_tour = null; 
+        let improved_in_current_pass = false; 
+        
+        let totalDistance = 0;
+
+        // --- DOM Elements ---
+        const canvas = document.getElementById('tsp-canvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        
+        const btnGenerate = document.getElementById('btn-generate');
+        const btnPlay = document.getElementById('btn-play');
+        const btnStep = document.getElementById('btn-step');
+        const inputNumCities = document.getElementById('num-cities');
+        const labelNumCities = document.getElementById('num-cities-val');
+        const inputSpeed = document.getElementById('speed');
+        
+        const labelTourLength = document.getElementById('tour-length');
+        const statT = document.getElementById('stat-t');
+        const listT = document.getElementById('list-t'); 
+        const statusPanel = document.getElementById('status-panel');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toast-msg');
+
+        const candidateEdgesText = document.getElementById('candidate-edges-text');
+        const actionText = document.getElementById('action-text');
+
+        // Coordinate System 
+        const CANVAS_WIDTH = 1000;
+        const CANVAS_HEIGHT = 800;
+        const PADDING = 40;
+        const NODE_RADIUS = 22; 
+        const HIT_RADIUS = NODE_RADIUS + 15; // Increased forgiveness area for clicking
+
+        // --- Initialization & Setup ---
+        function initCanvas() {
+            canvas.width = CANVAS_WIDTH;
+            canvas.height = CANVAS_HEIGHT;
+            draw();
+        }
+
+        function generateRandomCities(count) {
+            cities = [];
+            for (let i = 0; i < count; i++) {
+                cities.push({
+                    x: PADDING + Math.random() * (CANVAS_WIDTH - 2 * PADDING),
+                    y: PADDING + Math.random() * (CANVAS_HEIGHT - 2 * PADDING),
+                    id: i
+                });
+            }
+        }
+
+        function resetAlgorithm() {
+            pauseAutoPlay();
+            tourT = [];
+            candidate_i = 0;
+            candidate_j = 2;
+            best_proposed_tour = null;
+            improved_in_current_pass = false;
+            totalDistance = 0;
+            
+            candidateEdgesText.innerHTML = '-';
+            actionText.innerHTML = '-';
+            
+            currentState = State.INIT_TOUR;
+            updateUI();
+            draw();
+        }
+
+        // --- Mouse Interaction (Drag & Drop) ---
+        function getMousePos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            
+            // Calculate actual rendered canvas dimensions inside the DOM element based on object-contain
+            const canvasRatio = canvas.width / canvas.height;
+            const rectRatio = rect.width / rect.height;
+            
+            let renderedWidth = rect.width;
+            let renderedHeight = rect.height;
+            let offsetX = 0;
+            let offsetY = 0;
+
+            if (rectRatio > canvasRatio) {
+                // Letterboxed on the left and right
+                renderedWidth = rect.height * canvasRatio;
+                offsetX = (rect.width - renderedWidth) / 2;
+            } else {
+                // Letterboxed on the top and bottom
+                renderedHeight = rect.width / canvasRatio;
+                offsetY = (rect.height - renderedHeight) / 2;
+            }
+
+            // Scale to map DOM pixels to internal canvas coordinates
+            const scaleX = canvas.width / renderedWidth;
+            const scaleY = canvas.height / renderedHeight;
+
+            return {
+                x: (evt.clientX - rect.left - offsetX) * scaleX,
+                y: (evt.clientY - rect.top - offsetY) * scaleY
+            };
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const pos = getMousePos(e);
+            
+            // Allow interactions only inside the actual visual render area
+            if (pos.x < 0 || pos.y < 0 || pos.x > canvas.width || pos.y > canvas.height) return;
+
+            // Find clicked node (with increased Hit Radius)
+            for (let i = 0; i < cities.length; i++) {
+                const dist = Math.sqrt(Math.pow(pos.x - cities[i].x, 2) + Math.pow(pos.y - cities[i].y, 2));
+                if (dist <= HIT_RADIUS) {
+                    draggingNodeIdx = i;
+                    canvas.classList.replace('cursor-grab', 'cursor-grabbing');
+                    
+                    // Pause playback if interacting
+                    if (isPlaying) pauseAutoPlay();
+                    
+                    break;
+                }
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (draggingNodeIdx !== null) {
+                const pos = getMousePos(e);
+                
+                // Constrain within padding bounds
+                cities[draggingNodeIdx].x = Math.max(PADDING, Math.min(CANVAS_WIDTH - PADDING, pos.x));
+                cities[draggingNodeIdx].y = Math.max(PADDING, Math.min(CANVAS_HEIGHT - PADDING, pos.y));
+                
+                // Real-time distance update
+                totalDistance = getTourDistance(tourT);
+                
+                // If the user modifies the graph, we reset the 2-Opt sweep state 
+                // so it can dynamically fix new crossings created by the user.
+                if (currentState !== State.INIT_TOUR && currentState !== State.IDLE) {
+                    currentState = State.SELECT_EDGES;
+                    candidate_i = 0;
+                    candidate_j = 2;
+                    best_proposed_tour = null;
+                    improved_in_current_pass = false;
+                    actionText.innerHTML = "Tour modified manually. Ready to sweep.";
+                    candidateEdgesText.innerHTML = '-';
+                }
+
+                updateUI();
+                draw();
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            draggingNodeIdx = null;
+            canvas.classList.replace('cursor-grabbing', 'cursor-grab');
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            draggingNodeIdx = null;
+            canvas.classList.replace('cursor-grabbing', 'cursor-grab');
+        });
+
+        // --- Core Algorithm Steps ---
+        function calculateDistance(c1, c2) {
+            const dx = c1.x - c2.x;
+            const dy = c1.y - c2.y;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        // Helper functions to check if two line segments cross
+        function orientation(p, q, r) {
+            let val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+            if (val === 0) return 0;  // collinear
+            return (val > 0) ? 1 : 2; // clock or counterclock wise
+        }
+
+        function doIntersect(p1, q1, p2, q2) {
+            let o1 = orientation(p1, q1, p2);
+            let o2 = orientation(p1, q1, q2);
+            let o3 = orientation(p2, q2, p1);
+            let o4 = orientation(p2, q2, q1);
+            return (o1 !== o2 && o3 !== o4);
+        }
+
+        function getTourDistance(tourArray) {
+            let dist = 0;
+            if (tourArray.length < 2) return 0;
+            for (let i = 0; i < tourArray.length; i++) {
+                const c1 = cities[tourArray[i]];
+                const c2 = cities[tourArray[(i + 1) % tourArray.length]];
+                dist += calculateDistance(c1, c2);
+            }
+            return dist;
+        }
+
+        function stepAlgorithm() {
+            if (currentState === State.DONE) return;
+
+            let n = cities.length;
+
+            switch (currentState) {
+                case State.INIT_TOUR:
+                    // Create a completely random initial tour
+                    tourT = Array.from({length: n}, (_, i) => i);
+                    for (let i = n - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [tourT[i], tourT[j]] = [tourT[j], tourT[i]];
+                    }
+                    totalDistance = getTourDistance(tourT);
+                    
+                    candidate_i = 0;
+                    candidate_j = 2;
+                    
+                    candidateEdgesText.innerHTML = "Generated Random Tour";
+                    actionText.innerHTML = "Starting 2-Opt sweeps...";
+                    
+                    currentState = State.SELECT_EDGES;
+                    break;
+
+                case State.SELECT_EDGES:
+                    let foundCrossing = false;
+                    let sweepCompleted = false;
+                    
+                    // Internal loop: fast-forward until we find a crossing pair
+                    while (!foundCrossing && !sweepCompleted) {
+                        // Determine next valid pair of edges (i, i+1) and (j, j+1)
+                        if (candidate_j >= n || (candidate_i === 0 && candidate_j >= n - 1)) {
+                            candidate_i++;
+                            candidate_j = candidate_i + 2;
+                            
+                            if (candidate_i >= n - 2) {
+                                // Finished a full sweep
+                                if (improved_in_current_pass) {
+                                    // Reset and sweep again since we changed the tour
+                                    candidate_i = 0;
+                                    candidate_j = 2;
+                                    improved_in_current_pass = false;
+                                    actionText.innerHTML = "Completed pass. Improvements found, sweeping again.";
+                                    sweepCompleted = true; // Break loop to allow visual update
+                                } else {
+                                    // No crossings found in a full sweep -> Local Optimum
+                                    candidate_i = null;
+                                    candidate_j = null;
+                                    currentState = State.DONE;
+                                    showToast("Local Optimum Reached!");
+                                    pauseAutoPlay();
+                                    sweepCompleted = true; // Break loop
+                                }
+                                continue;
+                            }
+                        }
+
+                        if (!sweepCompleted) {
+                            let u1 = tourT[candidate_i];
+                            let v1 = tourT[(candidate_i + 1) % n];
+                            let u2 = tourT[candidate_j];
+                            let v2 = tourT[(candidate_j + 1) % n];
+                            
+                            // Check if the physical line segments cross each other
+                            if (doIntersect(cities[u1], cities[v1], cities[u2], cities[v2])) {
+                                foundCrossing = true;
+                                candidateEdgesText.innerHTML = `Edge(${u1}-${v1}) &amp; Edge(${u2}-${v2})`;
+                                actionText.innerHTML = `<span class="text-rose-600 font-bold">Crossing detected!</span> Evaluating swap...`;
+                                best_proposed_tour = null;
+                                currentState = State.EVALUATE_MOVE;
+                            } else {
+                                candidate_j++; // Skip to the next pair immediately without visual rendering
+                            }
+                        }
+                    }
+                    break;
+
+                case State.EVALUATE_MOVE:
+                    let node_u1 = tourT[candidate_i];
+                    let node_v1 = tourT[(candidate_i + 1) % n];
+                    let node_u2 = tourT[candidate_j];
+                    let node_v2 = tourT[(candidate_j + 1) % n];
+                    
+                    let d1 = calculateDistance(cities[node_u1], cities[node_v1]);
+                    let d2 = calculateDistance(cities[node_u2], cities[node_v2]);
+                    let d_new1 = calculateDistance(cities[node_u1], cities[node_u2]);
+                    let d_new2 = calculateDistance(cities[node_v1], cities[node_v2]);
+                    
+                    // We already verified they cross in SELECT_EDGES. Reconnect to untangle.
+                    let new_tour = [...tourT];
+                    let start = candidate_i + 1;
+                    let end = candidate_j;
+                    
+                    // Reverse elements in place
+                    while (start < end) {
+                        let temp = new_tour[start];
+                        new_tour[start] = new_tour[end];
+                        new_tour[end] = temp;
+                        start++;
+                        end--;
+                    }
+                    
+                    best_proposed_tour = new_tour;
+                    let savings = (d1 + d2) - (d_new1 + d_new2);
+                    actionText.innerHTML = `<span class="text-emerald-600 font-bold">Untangling edges!</span> (Saves ${savings.toFixed(1)})`;
+                    currentState = State.APPLY_MOVE;
+                    break;
+
+                case State.APPLY_MOVE:
+                    // Commit the move
+                    tourT = best_proposed_tour;
+                    totalDistance = getTourDistance(tourT);
+                    improved_in_current_pass = true;
+                    best_proposed_tour = null; 
+                    
+                    actionText.innerHTML = `Edges swapped &amp; sub-tour reversed!`;
+                    
+                    candidate_j++; 
+                    currentState = State.SELECT_EDGES;
+                    break;
+            }
+
+            updateUI();
+            draw();
+        }
+
+        // --- Drawing Logic ---
+        function draw() {
+            // Fill background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            let n = tourT.length;
+
+            // Base Tour
+            if (n > 0) {
+                ctx.beginPath();
+                ctx.moveTo(cities[tourT[0]].x, cities[tourT[0]].y);
+                for (let i = 1; i < n; i++) {
+                    ctx.lineTo(cities[tourT[i]].x, cities[tourT[i]].y);
+                }
+                ctx.lineTo(cities[tourT[0]].x, cities[tourT[0]].y); // Close loop
+                
+                if (best_proposed_tour !== null || currentState === State.EVALUATE_MOVE) {
+                    // Faint lines if we are showing a proposed improvement or evaluating
+                    ctx.strokeStyle = '#cbd5e1'; // slate-300
+                    ctx.lineWidth = 2;
+                } else {
+                    // Solid lines for active tour
+                    ctx.strokeStyle = '#334155'; // slate-700
+                    ctx.lineWidth = 3;
+                }
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+            }
+
+            // Highlight Evaluated Edges
+            if ((currentState === State.EVALUATE_MOVE || currentState === State.APPLY_MOVE) && candidate_i !== null && candidate_j !== null) {
+                let u1 = tourT[candidate_i];
+                let v1 = tourT[(candidate_i + 1) % n];
+                let u2 = tourT[candidate_j];
+                let v2 = tourT[(candidate_j + 1) % n];
+                
+                ctx.beginPath();
+                ctx.moveTo(cities[u1].x, cities[u1].y);
+                ctx.lineTo(cities[v1].x, cities[v1].y);
+                ctx.moveTo(cities[u2].x, cities[u2].y);
+                ctx.lineTo(cities[v2].x, cities[v2].y);
+                ctx.strokeStyle = '#f59e0b'; // amber-500
+                ctx.lineWidth = 5;
+                ctx.stroke();
+            }
+
+            // Draw Proposed Tour Overlay (Step: EVALUATE_MOVE -> found improvement)
+            if (best_proposed_tour !== null) {
+                ctx.beginPath();
+                ctx.moveTo(cities[best_proposed_tour[0]].x, cities[best_proposed_tour[0]].y);
+                for (let i = 1; i < n; i++) {
+                    ctx.lineTo(cities[best_proposed_tour[i]].x, cities[best_proposed_tour[i]].y);
+                }
+                ctx.lineTo(cities[best_proposed_tour[0]].x, cities[best_proposed_tour[0]].y);
+                
+                ctx.strokeStyle = '#10b981'; // emerald-500
+                ctx.lineWidth = 4;
+                ctx.setLineDash([10, 8]); // Dashed line to show it's a proposed change
+                ctx.stroke();
+                ctx.setLineDash([]); // Reset dash
+            }
+
+            // Draw cities (nodes) and their labels
+            cities.forEach((city, idx) => {
+                ctx.beginPath();
+                ctx.arc(city.x, city.y, NODE_RADIUS, 0, Math.PI * 2);
+                
+                let textColor = '#ffffff'; 
+
+                let isActiveNode = false;
+                if ((currentState === State.EVALUATE_MOVE || currentState === State.APPLY_MOVE) && candidate_i !== null && candidate_j !== null) {
+                    let u1 = tourT[candidate_i];
+                    let v1 = tourT[(candidate_i + 1) % n];
+                    let u2 = tourT[candidate_j];
+                    let v2 = tourT[(candidate_j + 1) % n];
+                    if (idx === u1 || idx === v1 || idx === u2 || idx === v2) {
+                        isActiveNode = true;
+                    }
+                }
+
+                if (isActiveNode && currentState !== State.DONE && draggingNodeIdx !== idx) {
+                    // Endpoint nodes for current edge pair evaluation
+                    ctx.fillStyle = '#f59e0b'; // amber-500
+                    ctx.strokeStyle = '#b45309';
+                    ctx.lineWidth = 2;
+                    // Add a pulse ring
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(city.x, city.y, NODE_RADIUS + 8, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+                    ctx.lineWidth = 4;
+                } else if (draggingNodeIdx === idx) {
+                    // Node being actively dragged
+                    ctx.fillStyle = '#8b5cf6'; // violet-500
+                    ctx.strokeStyle = '#5b21b6';
+                    ctx.lineWidth = 4;
+                } else {
+                    // Normal Tour Node
+                    ctx.fillStyle = '#3b82f6'; // blue-500
+                    ctx.strokeStyle = '#1d4ed8';
+                    ctx.lineWidth = 2;
+                }
+                
+                ctx.fill();
+                ctx.stroke();
+
+                // Draw Node Label (Index) centered inside the circle
+                ctx.fillStyle = textColor; 
+                ctx.font = 'bold 22px monospace'; 
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(idx, city.x, city.y); 
+            });
+        }
+
+        // --- UI Updates & Controls ---
+        function updateUI() {
+            // Update Stats
+            labelTourLength.innerText = totalDistance.toFixed(0);
+            statusPanel.classList.remove('hidden');
+            statT.innerText = tourT.length;
+
+            // Format tour list indicating it loops back
+            if (tourT.length > 0) {
+                listT.innerHTML = `[ ${tourT.join(' &rarr; ')} &rarr; (loop) ]`;
+            } else {
+                listT.innerHTML = '[ ]';
+            }
+
+            // Update Buttons
+            btnStep.disabled = (currentState === State.DONE || isPlaying);
+            if (btnStep.disabled && !isPlaying) {
+                btnStep.classList.replace('bg-emerald-500', 'bg-slate-300');
+                btnStep.classList.replace('hover:bg-emerald-600', 'hover:bg-slate-300');
+            } else {
+                btnStep.classList.replace('bg-slate-300', 'bg-emerald-500');
+                btnStep.classList.replace('hover:bg-slate-300', 'hover:bg-emerald-600');
+            }
+        }
+
+        function showToast(msg) {
+            toastMsg.innerText = msg;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+            }, 3000);
+        }
+
+        // --- Auto Play Logic ---
+        function getSpeedDelay() {
+            const val = parseInt(inputSpeed.value);
+            return 1500 - ((val - 1) * 160); 
+        }
+
+        function toggleAutoPlay() {
+            if (currentState === State.DONE) {
+                resetAlgorithm();
+            }
+
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                btnPlay.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pause`;
+                btnPlay.classList.replace('bg-indigo-600', 'bg-rose-500');
+                btnPlay.classList.replace('hover:bg-indigo-700', 'hover:bg-rose-600');
+                executePlayStep();
+            } else {
+                pauseAutoPlay();
+            }
+            updateUI();
+        }
+
+        function pauseAutoPlay() {
+            isPlaying = false;
+            clearTimeout(playInterval);
+            btnPlay.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Auto Play`;
+            btnPlay.classList.replace('bg-rose-500', 'bg-indigo-600');
+            btnPlay.classList.replace('hover:bg-rose-600', 'hover:bg-indigo-700');
+            updateUI();
+        }
+
+        function executePlayStep() {
+            if (!isPlaying) return;
+            
+            stepAlgorithm();
+            
+            if (currentState !== State.DONE) {
+                playInterval = setTimeout(executePlayStep, getSpeedDelay());
+            } else {
+                pauseAutoPlay();
+            }
+        }
+
+        // --- Event Listeners ---
+        btnGenerate.addEventListener('click', () => {
+            generateRandomCities(parseInt(inputNumCities.value));
+            resetAlgorithm();
+        });
+
+        btnStep.addEventListener('click', stepAlgorithm);
+        btnPlay.addEventListener('click', toggleAutoPlay);
+
+        inputNumCities.addEventListener('input', (e) => {
+            labelNumCities.innerText = e.target.value;
+        });
+
+        // Initialize
+        initCanvas();
+        generateRandomCities(parseInt(inputNumCities.value));
+        resetAlgorithm();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TSP Algorithms Comparison</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen flex flex-col font-sans overflow-hidden">
+
+    <!-- Global Header & Controls -->
+    <header class="bg-white shadow-sm border-b border-slate-200 py-3 px-6 flex flex-col md:flex-row justify-between items-center z-20 shrink-0 gap-4">
+        <div>
+            <h1 class="text-xl font-bold text-slate-800">TSP Greedy & Local Search Comparison</h1>
+            <p class="text-xs text-slate-500">1st Greedy vs. 2nd Greedy vs. 2-Opt (Drag nodes to interact)</p>
+        </div>
+        
+        <div class="flex items-center gap-6 bg-slate-50 p-2 px-4 rounded-lg border border-slate-200">
+            <div class="flex items-center gap-2">
+                <label for="num-cities" class="text-xs font-medium text-slate-700">Cities: <span id="num-cities-val" class="font-bold">15</span></label>
+                <input type="range" id="num-cities" min="5" max="50" value="15" class="w-24 accent-indigo-600">
+            </div>
+            <div class="w-px h-6 bg-slate-300"></div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-medium text-slate-700">Speed:</span>
+                <input type="range" id="speed" min="1" max="10" value="5" class="w-24 accent-indigo-600">
+            </div>
+            <div class="w-px h-6 bg-slate-300"></div>
+            <button id="btn-generate" class="text-xs py-1.5 px-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded transition-colors">
+                New Map
+            </button>
+            <button id="btn-step" class="text-xs py-1.5 px-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded transition-colors">
+                Step All
+            </button>
+            <button id="btn-play" class="text-xs py-1.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded transition-colors flex items-center gap-1">
+                Play All
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 overflow-hidden">
+        
+        <!-- Alg 1: Nearest Neighbor -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+            <div class="p-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-800">1st Greedy: Nearest Neighbor</h2>
+                    <p class="text-[10px] text-slate-500 uppercase">Path builder</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-[10px] text-slate-500 uppercase font-bold">Length</div>
+                    <div id="len-alg1" class="text-lg font-mono font-bold text-emerald-600">0</div>
+                </div>
+            </div>
+            <div class="flex-1 relative bg-slate-50 p-2 flex items-center justify-center">
+                <canvas id="canvas-alg1" class="bg-white rounded shadow-sm border border-slate-200 w-full h-full object-contain cursor-grab"></canvas>
+                <div id="badge-alg1" class="absolute top-4 left-4 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 transition-opacity">Done</div>
+            </div>
+        </div>
+
+        <!-- Alg 2: Closest Insertion -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+            <div class="p-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-800">2nd Greedy: Closest Insertion</h2>
+                    <p class="text-[10px] text-slate-500 uppercase">Cycle builder</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-[10px] text-slate-500 uppercase font-bold">Length</div>
+                    <div id="len-alg2" class="text-lg font-mono font-bold text-blue-600">0</div>
+                </div>
+            </div>
+            <div class="flex-1 relative bg-slate-50 p-2 flex items-center justify-center">
+                <canvas id="canvas-alg2" class="bg-white rounded shadow-sm border border-slate-200 w-full h-full object-contain cursor-grab"></canvas>
+                <div id="badge-alg2" class="absolute top-4 left-4 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 transition-opacity">Done</div>
+            </div>
+        </div>
+
+        <!-- Alg 3: 2-Opt -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+            <div class="p-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-800">Local Search: 2-Opt</h2>
+                    <p class="text-[10px] text-slate-500 uppercase">Intersection Untangler</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-[10px] text-slate-500 uppercase font-bold">Length</div>
+                    <div id="len-alg3" class="text-lg font-mono font-bold text-amber-600">0</div>
+                </div>
+            </div>
+            <div class="flex-1 relative bg-slate-50 p-2 flex items-center justify-center">
+                <canvas id="canvas-alg3" class="bg-white rounded shadow-sm border border-slate-200 w-full h-full object-contain cursor-grab"></canvas>
+                <div id="badge-alg3" class="absolute top-4 left-4 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 transition-opacity">Done</div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- Shared Globals & Math ---
+        let globalCities = [];
+        const CANVAS_WIDTH = 800;
+        const CANVAS_HEIGHT = 800;
+        const PADDING = 40;
+        const NODE_RADIUS = 16;
+        const HIT_RADIUS = NODE_RADIUS + 15;
+
+        let isPlaying = false;
+        let playInterval;
+        let globalDraggingNodeIdx = null;
+
+        function calculateDistance(c1, c2) {
+            return Math.sqrt(Math.pow(c1.x - c2.x, 2) + Math.pow(c1.y - c2.y, 2));
+        }
+
+        function getTourDistance(tourArray) {
+            if (tourArray.length < 2) return 0;
+            let dist = 0;
+            for (let i = 0; i < tourArray.length; i++) {
+                dist += calculateDistance(globalCities[tourArray[i]], globalCities[tourArray[(i + 1) % tourArray.length]]);
+            }
+            return dist;
+        }
+
+        // --- Interaction Logic (Drag & Drop) ---
+        function getMousePos(canvas, evt) {
+            const rect = canvas.getBoundingClientRect();
+            const canvasRatio = canvas.width / canvas.height;
+            const rectRatio = rect.width / rect.height;
+            let renderedWidth = rect.width;
+            let renderedHeight = rect.height;
+            let offsetX = 0, offsetY = 0;
+
+            if (rectRatio > canvasRatio) {
+                renderedWidth = rect.height * canvasRatio;
+                offsetX = (rect.width - renderedWidth) / 2;
+            } else {
+                renderedHeight = rect.width / canvasRatio;
+                offsetY = (rect.height - renderedHeight) / 2;
+            }
+            const scaleX = canvas.width / renderedWidth;
+            const scaleY = canvas.height / renderedHeight;
+            return {
+                x: (evt.clientX - rect.left - offsetX) * scaleX,
+                y: (evt.clientY - rect.top - offsetY) * scaleY
+            };
+        }
+
+        function attachDragListeners(canvasEl) {
+            canvasEl.addEventListener('mousedown', (e) => {
+                const pos = getMousePos(canvasEl, e);
+                if (pos.x < 0 || pos.y < 0 || pos.x > canvasEl.width || pos.y > canvasEl.height) return;
+                
+                for (let i = 0; i < globalCities.length; i++) {
+                    const dist = calculateDistance(pos, globalCities[i]);
+                    if (dist <= HIT_RADIUS) {
+                        globalDraggingNodeIdx = i;
+                        document.body.style.cursor = 'grabbing';
+                        pauseAutoPlay();
+                        break;
+                    }
+                }
+            });
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            if (globalDraggingNodeIdx !== null) {
+                // Determine which canvas we are primarily over (fallback to the first one for scaling)
+                const targetCanvas = document.getElementById('canvas-alg1'); 
+                const pos = getMousePos(targetCanvas, e);
+                
+                globalCities[globalDraggingNodeIdx].x = Math.max(PADDING, Math.min(CANVAS_WIDTH - PADDING, pos.x));
+                globalCities[globalDraggingNodeIdx].y = Math.max(PADDING, Math.min(CANVAS_HEIGHT - PADDING, pos.y));
+                
+                // If the user drags a node, reset all algorithms to start fresh
+                resetAllAlgorithms(); 
+                drawAll();
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            globalDraggingNodeIdx = null;
+            document.body.style.cursor = 'default';
+        });
+
+        // --- Algorithm 1: Nearest Neighbor ---
+        class AlgNearestNeighbor {
+            constructor(canvasId, lenId, badgeId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d', { alpha: false });
+                this.lenLabel = document.getElementById(lenId);
+                this.badge = document.getElementById(badgeId);
+                this.canvas.width = CANVAS_WIDTH;
+                this.canvas.height = CANVAS_HEIGHT;
+                attachDragListeners(this.canvas);
+                this.reset();
+            }
+
+            reset() {
+                this.state = 'INIT';
+                this.setS = new Set(globalCities.map((_, i) => i));
+                this.tourT = [];
+                this.lastIdx = null;
+                this.candidateIdx = null;
+                this.scanningPairs = [];
+                this.totalDistance = 0;
+                this.badge.classList.add('opacity-0');
+                this.lenLabel.innerText = '0';
+            }
+
+            step() {
+                if (this.state === 'DONE') return;
+                this.scanningPairs = [];
+
+                switch (this.state) {
+                    case 'INIT':
+                        const startNode = 0; // Always start at 0 for consistency in comparison
+                        this.tourT.push(startNode);
+                        this.lastIdx = startNode;
+                        this.setS.delete(startNode);
+                        this.state = 'SCAN';
+                        break;
+                    case 'SCAN':
+                        if (this.setS.size === 0) {
+                            this.state = 'CONNECT';
+                            break;
+                        }
+                        let minDist = Infinity;
+                        this.candidateIdx = null;
+                        this.setS.forEach(x => {
+                            this.scanningPairs.push(x);
+                            const d = calculateDistance(globalCities[this.lastIdx], globalCities[x]);
+                            if (d < minDist) {
+                                minDist = d;
+                                this.candidateIdx = x;
+                            }
+                        });
+                        this.state = 'INSERT';
+                        break;
+                    case 'INSERT':
+                        this.tourT.push(this.candidateIdx);
+                        this.setS.delete(this.candidateIdx);
+                        this.lastIdx = this.candidateIdx;
+                        this.candidateIdx = null;
+                        this.state = 'SCAN';
+                        break;
+                    case 'CONNECT':
+                        this.state = 'DONE';
+                        this.badge.classList.remove('opacity-0');
+                        break;
+                }
+                this.updateLength();
+            }
+
+            updateLength() {
+                let d = 0;
+                for(let i=0; i<this.tourT.length-1; i++){
+                    d += calculateDistance(globalCities[this.tourT[i]], globalCities[this.tourT[i+1]]);
+                }
+                if (this.state === 'DONE' && this.tourT.length > 1) {
+                    d += calculateDistance(globalCities[this.tourT[this.tourT.length-1]], globalCities[this.tourT[0]]);
+                }
+                this.totalDistance = d;
+                this.lenLabel.innerText = d.toFixed(0);
+            }
+
+            draw() {
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+                // Path
+                if (this.tourT.length > 1) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(globalCities[this.tourT[0]].x, globalCities[this.tourT[0]].y);
+                    for (let i = 1; i < this.tourT.length; i++) {
+                        this.ctx.lineTo(globalCities[this.tourT[i]].x, globalCities[this.tourT[i]].y);
+                    }
+                    if (this.state === 'DONE') {
+                        this.ctx.lineTo(globalCities[this.tourT[0]].x, globalCities[this.tourT[0]].y);
+                    }
+                    this.ctx.strokeStyle = '#059669'; // emerald-600
+                    this.ctx.lineWidth = 3;
+                    this.ctx.lineCap = 'round';
+                    this.ctx.lineJoin = 'round';
+                    this.ctx.stroke();
+                }
+
+                // Scans
+                if (this.state === 'INSERT' && this.lastIdx !== null) {
+                    this.ctx.lineWidth = 1;
+                    const cur = globalCities[this.lastIdx];
+                    this.scanningPairs.forEach(idx => {
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(cur.x, cur.y);
+                        this.ctx.lineTo(globalCities[idx].x, globalCities[idx].y);
+                        this.ctx.strokeStyle = '#cbd5e1';
+                        this.ctx.stroke();
+                    });
+                    if (this.candidateIdx !== null) {
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(cur.x, cur.y);
+                        this.ctx.lineTo(globalCities[this.candidateIdx].x, globalCities[this.candidateIdx].y);
+                        this.ctx.strokeStyle = '#ef4444';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.stroke();
+                    }
+                }
+
+                drawNodes(this.ctx, this.tourT, this.candidateIdx, null, this.state === 'DONE');
+            }
+        }
+
+        // --- Algorithm 2: Closest Insertion ---
+        class AlgClosestInsertion {
+            constructor(canvasId, lenId, badgeId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d', { alpha: false });
+                this.lenLabel = document.getElementById(lenId);
+                this.badge = document.getElementById(badgeId);
+                this.canvas.width = CANVAS_WIDTH;
+                this.canvas.height = CANVAS_HEIGHT;
+                attachDragListeners(this.canvas);
+                this.reset();
+            }
+
+            reset() {
+                this.state = 'INIT';
+                this.setS = new Set(globalCities.map((_, i) => i));
+                this.tourT = [];
+                this.candX = null;
+                this.candY = null;
+                this.scanningPairs = [];
+                this.totalDistance = 0;
+                this.badge.classList.add('opacity-0');
+                this.lenLabel.innerText = '0';
+            }
+
+            step() {
+                if (this.state === 'DONE') return;
+                this.scanningPairs = [];
+
+                switch (this.state) {
+                    case 'INIT':
+                        let minDist = Infinity;
+                        let c1 = 0, c2 = 1;
+                        for (let i = 0; i < globalCities.length; i++) {
+                            for (let j = i + 1; j < globalCities.length; j++) {
+                                const d = calculateDistance(globalCities[i], globalCities[j]);
+                                if (d < minDist) { minDist = d; c1 = i; c2 = j; }
+                            }
+                        }
+                        this.tourT.push(c1, c2);
+                        this.setS.delete(c1);
+                        this.setS.delete(c2);
+                        this.state = 'SCAN';
+                        break;
+                    case 'SCAN':
+                        if (this.setS.size === 0) {
+                            this.state = 'DONE';
+                            this.badge.classList.remove('opacity-0');
+                            break;
+                        }
+                        let minNodeDist = Infinity;
+                        this.candX = null;
+                        this.candY = null;
+                        
+                        this.setS.forEach(x => {
+                            let closestY = null;
+                            let minDistToT = Infinity;
+                            this.tourT.forEach(y => {
+                                const d = calculateDistance(globalCities[x], globalCities[y]);
+                                if (d < minDistToT) { minDistToT = d; closestY = y; }
+                            });
+                            this.scanningPairs.push([x, closestY]);
+                            if (minDistToT < minNodeDist) {
+                                minNodeDist = minDistToT;
+                                this.candX = x;
+                                this.candY = closestY;
+                            }
+                        });
+                        this.state = 'INSERT';
+                        break;
+                    case 'INSERT':
+                        const y_idx = this.tourT.indexOf(this.candY);
+                        const len = this.tourT.length;
+                        const u_idx = (y_idx - 1 + len) % len;
+                        const z_idx = (y_idx + 1) % len;
+                        
+                        const y_c = globalCities[this.tourT[y_idx]];
+                        const u_c = globalCities[this.tourT[u_idx]];
+                        const z_c = globalCities[this.tourT[z_idx]];
+                        const x_c = globalCities[this.candX];
+                        
+                        const cost_yz = calculateDistance(y_c, x_c) + calculateDistance(x_c, z_c) - calculateDistance(y_c, z_c);
+                        const cost_uy = calculateDistance(u_c, x_c) + calculateDistance(x_c, y_c) - calculateDistance(u_c, y_c);
+                        
+                        if (cost_yz <= cost_uy) this.tourT.splice(y_idx + 1, 0, this.candX);
+                        else this.tourT.splice(y_idx, 0, this.candX);
+                        
+                        this.setS.delete(this.candX);
+                        this.candX = null;
+                        this.candY = null;
+                        this.state = 'SCAN';
+                        break;
+                }
+                this.updateLength();
+            }
+
+            updateLength() {
+                this.totalDistance = getTourDistance(this.tourT);
+                this.lenLabel.innerText = this.totalDistance.toFixed(0);
+            }
+
+            draw() {
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+                // Tour
+                if (this.tourT.length > 0) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(globalCities[this.tourT[0]].x, globalCities[this.tourT[0]].y);
+                    for (let i = 1; i < this.tourT.length; i++) {
+                        this.ctx.lineTo(globalCities[this.tourT[i]].x, globalCities[this.tourT[i]].y);
+                    }
+                    if (this.tourT.length >= 2) {
+                        this.ctx.lineTo(globalCities[this.tourT[0]].x, globalCities[this.tourT[0]].y);
+                    }
+                    this.ctx.strokeStyle = '#2563eb'; // blue-600
+                    this.ctx.lineWidth = 3;
+                    this.ctx.lineCap = 'round';
+                    this.ctx.lineJoin = 'round';
+                    this.ctx.stroke();
+                }
+
+                // Scans
+                if (this.state === 'INSERT') {
+                    this.ctx.lineWidth = 1;
+                    this.scanningPairs.forEach(pair => {
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(globalCities[pair[0]].x, globalCities[pair[0]].y);
+                        this.ctx.lineTo(globalCities[pair[1]].x, globalCities[pair[1]].y);
+                        this.ctx.strokeStyle = '#cbd5e1';
+                        this.ctx.stroke();
+                    });
+                    if (this.candX !== null && this.candY !== null) {
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(globalCities[this.candX].x, globalCities[this.candX].y);
+                        this.ctx.lineTo(globalCities[this.candY].x, globalCities[this.candY].y);
+                        this.ctx.strokeStyle = '#ef4444';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.stroke();
+                    }
+                }
+
+                drawNodes(this.ctx, this.tourT, this.candX, this.candY, this.state === 'DONE');
+            }
+        }
+
+        // --- Algorithm 3: 2-Opt ---
+        class AlgTwoOpt {
+            constructor(canvasId, lenId, badgeId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d', { alpha: false });
+                this.lenLabel = document.getElementById(lenId);
+                this.badge = document.getElementById(badgeId);
+                this.canvas.width = CANVAS_WIDTH;
+                this.canvas.height = CANVAS_HEIGHT;
+                attachDragListeners(this.canvas);
+                this.reset();
+            }
+
+            reset() {
+                this.state = 'INIT';
+                this.tourT = [];
+                this.cand_i = 0;
+                this.cand_j = 2;
+                this.bestTour = null;
+                this.improved = false;
+                this.totalDistance = 0;
+                this.badge.classList.add('opacity-0');
+                this.lenLabel.innerText = '0';
+            }
+
+            orientation(p, q, r) {
+                let val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+                if (val === 0) return 0;  
+                return (val > 0) ? 1 : 2; 
+            }
+
+            doIntersect(p1, q1, p2, q2) {
+                let o1 = this.orientation(p1, q1, p2);
+                let o2 = this.orientation(p1, q1, q2);
+                let o3 = this.orientation(p2, q2, p1);
+                let o4 = this.orientation(p2, q2, q1);
+                return (o1 !== o2 && o3 !== o4);
+            }
+
+            step() {
+                if (this.state === 'DONE') return;
+                const n = globalCities.length;
+
+                switch (this.state) {
+                    case 'INIT':
+                        // Create a sequential path (often crosses itself wildly on random nodes)
+                        this.tourT = Array.from({length: n}, (_, i) => i);
+                        this.updateLength();
+                        this.cand_i = 0;
+                        this.cand_j = 2;
+                        this.improved = false;
+                        this.state = 'SCAN';
+                        break;
+                    case 'SCAN':
+                        let found = false;
+                        let completed = false;
+                        
+                        while (!found && !completed) {
+                            if (this.cand_j >= n || (this.cand_i === 0 && this.cand_j >= n - 1)) {
+                                this.cand_i++;
+                                this.cand_j = this.cand_i + 2;
+                                if (this.cand_i >= n - 2) {
+                                    if (this.improved) {
+                                        this.cand_i = 0;
+                                        this.cand_j = 2;
+                                        this.improved = false;
+                                        completed = true; 
+                                    } else {
+                                        this.state = 'DONE';
+                                        this.badge.classList.remove('opacity-0');
+                                        completed = true;
+                                    }
+                                    continue;
+                                }
+                            }
+                            if (!completed) {
+                                let u1 = this.tourT[this.cand_i];
+                                let v1 = this.tourT[(this.cand_i + 1) % n];
+                                let u2 = this.tourT[this.cand_j];
+                                let v2 = this.tourT[(this.cand_j + 1) % n];
+                                
+                                if (this.doIntersect(globalCities[u1], globalCities[v1], globalCities[u2], globalCities[v2])) {
+                                    found = true;
+                                    this.state = 'SWAP';
+                                } else {
+                                    this.cand_j++;
+                                }
+                            }
+                        }
+                        break;
+                    case 'SWAP':
+                        let new_tour = [...this.tourT];
+                        let start = this.cand_i + 1;
+                        let end = this.cand_j;
+                        while (start < end) {
+                            let t = new_tour[start];
+                            new_tour[start] = new_tour[end];
+                            new_tour[end] = t;
+                            start++; end--;
+                        }
+                        this.bestTour = new_tour;
+                        this.state = 'APPLY';
+                        break;
+                    case 'APPLY':
+                        this.tourT = this.bestTour;
+                        this.updateLength();
+                        this.improved = true;
+                        this.bestTour = null;
+                        this.cand_j++;
+                        this.state = 'SCAN';
+                        break;
+                }
+            }
+
+            updateLength() {
+                this.totalDistance = getTourDistance(this.tourT);
+                this.lenLabel.innerText = this.totalDistance.toFixed(0);
+            }
+
+            draw() {
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                const n = this.tourT.length;
+
+                // Base Tour
+                if (n > 0) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(globalCities[this.tourT[0]].x, globalCities[this.tourT[0]].y);
+                    for (let i = 1; i < n; i++) {
+                        this.ctx.lineTo(globalCities[this.tourT[i]].x, globalCities[this.tourT[i]].y);
+                    }
+                    this.ctx.lineTo(globalCities[this.tourT[0]].x, globalCities[this.tourT[0]].y);
+                    
+                    if (this.state === 'APPLY') {
+                        this.ctx.strokeStyle = '#cbd5e1'; 
+                        this.ctx.lineWidth = 2;
+                    } else {
+                        this.ctx.strokeStyle = '#d97706'; // amber-600
+                        this.ctx.lineWidth = 3;
+                    }
+                    this.ctx.lineCap = 'round';
+                    this.ctx.lineJoin = 'round';
+                    this.ctx.stroke();
+                }
+
+                // Proposed
+                if (this.bestTour !== null && this.state === 'APPLY') {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(globalCities[this.bestTour[0]].x, globalCities[this.bestTour[0]].y);
+                    for (let i = 1; i < n; i++) {
+                        this.ctx.lineTo(globalCities[this.bestTour[i]].x, globalCities[this.bestTour[i]].y);
+                    }
+                    this.ctx.lineTo(globalCities[this.bestTour[0]].x, globalCities[this.bestTour[0]].y);
+                    this.ctx.strokeStyle = '#10b981'; 
+                    this.ctx.lineWidth = 4;
+                    this.ctx.setLineDash([10, 8]); 
+                    this.ctx.stroke();
+                    this.ctx.setLineDash([]);
+                }
+
+                // Crossing Edge Highlights
+                if ((this.state === 'SWAP' || this.state === 'APPLY') && this.cand_i !== null && this.cand_j !== null) {
+                    let u1 = this.tourT[this.cand_i];
+                    let v1 = this.tourT[(this.cand_i + 1) % n];
+                    let u2 = this.tourT[this.cand_j];
+                    let v2 = this.tourT[(this.cand_j + 1) % n];
+                    
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(globalCities[u1].x, globalCities[u1].y);
+                    this.ctx.lineTo(globalCities[v1].x, globalCities[v1].y);
+                    this.ctx.moveTo(globalCities[u2].x, globalCities[u2].y);
+                    this.ctx.lineTo(globalCities[v2].x, globalCities[v2].y);
+                    this.ctx.strokeStyle = '#ef4444'; // rose-500
+                    this.ctx.lineWidth = 5;
+                    this.ctx.stroke();
+                }
+
+                // Active Nodes Array for coloring
+                let activeNodes = [];
+                if ((this.state === 'SWAP' || this.state === 'APPLY') && this.cand_i !== null && this.cand_j !== null) {
+                    activeNodes = [
+                        this.tourT[this.cand_i], this.tourT[(this.cand_i + 1) % n],
+                        this.tourT[this.cand_j], this.tourT[(this.cand_j + 1) % n]
+                    ];
+                }
+
+                drawNodes(this.ctx, this.tourT, null, null, this.state === 'DONE', activeNodes);
+            }
+        }
+
+        // --- Generic Node Drawing ---
+        function drawNodes(ctx, tourArray, cand1, cand2, isDone, activeArray = []) {
+            globalCities.forEach((city, idx) => {
+                ctx.beginPath();
+                ctx.arc(city.x, city.y, NODE_RADIUS, 0, Math.PI * 2);
+                
+                let textColor = '#ffffff'; 
+
+                if (idx === cand1 || idx === cand2 || activeArray.includes(idx)) {
+                    ctx.fillStyle = '#f59e0b'; // amber-500
+                    ctx.strokeStyle = '#b45309';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(city.x, city.y, NODE_RADIUS + 6, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+                    ctx.lineWidth = 4;
+                } else if (globalDraggingNodeIdx === idx) {
+                    ctx.fillStyle = '#8b5cf6'; // violet-500
+                    ctx.strokeStyle = '#5b21b6';
+                    ctx.lineWidth = 4;
+                } else if (tourArray.includes(idx)) {
+                    ctx.fillStyle = '#334155'; // slate-700
+                    ctx.strokeStyle = '#0f172a';
+                    ctx.lineWidth = 2;
+                } else {
+                    ctx.fillStyle = '#e2e8f0'; // slate-200
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.lineWidth = 2;
+                    textColor = '#334155'; 
+                }
+                
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = textColor; 
+                ctx.font = 'bold 16px monospace'; 
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(idx, city.x, city.y); 
+            });
+        }
+
+
+        // --- App Controller ---
+        let alg1, alg2, alg3;
+
+        function initApp() {
+            generateMap(parseInt(document.getElementById('num-cities').value));
+            alg1 = new AlgNearestNeighbor('canvas-alg1', 'len-alg1', 'badge-alg1');
+            alg2 = new AlgClosestInsertion('canvas-alg2', 'len-alg2', 'badge-alg2');
+            alg3 = new AlgTwoOpt('canvas-alg3', 'len-alg3', 'badge-alg3');
+            drawAll();
+        }
+
+        function generateMap(count) {
+            globalCities = [];
+            for (let i = 0; i < count; i++) {
+                globalCities.push({
+                    x: PADDING + Math.random() * (CANVAS_WIDTH - 2 * PADDING),
+                    y: PADDING + Math.random() * (CANVAS_HEIGHT - 2 * PADDING),
+                    id: i
+                });
+            }
+        }
+
+        function resetAllAlgorithms() {
+            if (alg1) alg1.reset();
+            if (alg2) alg2.reset();
+            if (alg3) alg3.reset();
+        }
+
+        function stepAll() {
+            alg1.step();
+            alg2.step();
+            alg3.step();
+            drawAll();
+
+            if (alg1.state === 'DONE' && alg2.state === 'DONE' && alg3.state === 'DONE') {
+                pauseAutoPlay();
+            }
+        }
+
+        function drawAll() {
+            if (alg1) alg1.draw();
+            if (alg2) alg2.draw();
+            if (alg3) alg3.draw();
+        }
+
+        // --- Controls UI ---
+        const btnPlay = document.getElementById('btn-play');
+        const btnStep = document.getElementById('btn-step');
+        const btnGenerate = document.getElementById('btn-generate');
+        const inputSpeed = document.getElementById('speed');
+
+        function getSpeedDelay() {
+            return 800 - ((parseInt(inputSpeed.value) - 1) * 85); 
+        }
+
+        function toggleAutoPlay() {
+            if (alg1.state === 'DONE' && alg2.state === 'DONE' && alg3.state === 'DONE') {
+                resetAllAlgorithms();
+            }
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                btnPlay.innerHTML = `Pause`;
+                btnPlay.classList.replace('bg-indigo-600', 'bg-rose-500');
+                btnPlay.classList.replace('hover:bg-indigo-700', 'hover:bg-rose-600');
+                executePlayStep();
+            } else {
+                pauseAutoPlay();
+            }
+        }
+
+        function pauseAutoPlay() {
+            isPlaying = false;
+            clearTimeout(playInterval);
+            btnPlay.innerHTML = `Play All`;
+            btnPlay.classList.replace('bg-rose-500', 'bg-indigo-600');
+            btnPlay.classList.replace('hover:bg-rose-600', 'hover:bg-indigo-700');
+        }
+
+        function executePlayStep() {
+            if (!isPlaying) return;
+            stepAll();
+            if (isPlaying) { // Might have been stopped by stepAll
+                playInterval = setTimeout(executePlayStep, getSpeedDelay());
+            }
+        }
+
+        // Event Listeners
+        btnGenerate.addEventListener('click', () => {
+            pauseAutoPlay();
+            generateMap(parseInt(document.getElementById('num-cities').value));
+            resetAllAlgorithms();
+            drawAll();
+        });
+
+        btnStep.addEventListener('click', () => {
+            pauseAutoPlay();
+            stepAll();
+        });
+        
+        btnPlay.addEventListener('click', toggleAutoPlay);
+
+        document.getElementById('num-cities').addEventListener('input', (e) => {
+            document.getElementById('num-cities-val').innerText = e.target.value;
+        });
+
+        // Bootstrap
+        initApp();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nearest Neighbor TSP Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for pseudo-code block */
+        .code-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .code-container::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+            border-radius: 4px;
+        }
+        .code-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .code-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        
+        .active-step {
+            background-color: #fef08a; /* yellow-200 */
+            border-left: 4px solid #eab308; /* yellow-500 */
+            padding-left: 0.5rem;
+            border-radius: 0 0.25rem 0.25rem 0;
+            transition: all 0.2s ease;
+        }
+        
+        .step-line {
+            padding: 0.25rem 0;
+            margin-left: 4px;
+            padding-left: 0.5rem;
+            border-left: 4px solid transparent;
+            transition: all 0.2s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 h-screen flex flex-col font-sans overflow-hidden">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-slate-200 py-4 px-6 flex justify-between items-center z-10 shrink-0">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Nearest Neighbor Algorithm</h1>
+            <p class="text-sm text-slate-500">1st Greedy Algorithm for the Traveling Salesperson Problem</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex flex-col items-end">
+                <span class="text-xs text-slate-500 uppercase font-semibold">Tour Length</span>
+                <span id="tour-length" class="text-xl font-mono font-bold text-indigo-600">0.00</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden">
+        
+        <!-- Left Panel: Controls & Pseudocode -->
+        <aside class="w-full md:w-1/3 lg:w-96 bg-white border-r border-slate-200 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-0">
+            
+            <!-- Controls -->
+            <div class="p-6 border-b border-slate-100 shrink-0 space-y-4">
+                <div class="flex justify-between items-center">
+                    <label for="num-cities" class="text-sm font-medium text-slate-700">Number of Cities:</label>
+                    <span id="num-cities-val" class="text-sm font-bold text-slate-900">15</span>
+                </div>
+                <input type="range" id="num-cities" min="5" max="50" value="15" class="w-full accent-indigo-600">
+                
+                <button id="btn-generate" class="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-colors flex justify-center items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+                    Generate New Cities
+                </button>
+
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button id="btn-play" class="py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors flex justify-center items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        Auto Play
+                    </button>
+                    <button id="btn-step" class="py-2 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors flex justify-center items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                        Next Step
+                    </button>
+                </div>
+                
+                <div class="pt-2 flex items-center gap-3">
+                    <span class="text-xs text-slate-500">Speed:</span>
+                    <input type="range" id="speed" min="1" max="10" value="5" class="flex-1 accent-indigo-600">
+                </div>
+            </div>
+
+            <!-- Set S and T Display -->
+            <div class="flex-1 overflow-y-auto p-6 bg-slate-50 flex flex-col">
+                <h3 class="text-xs uppercase font-bold text-slate-400 mb-4 tracking-wider">Current State</h3>
+                
+                <div id="status-panel" class="bg-white rounded-lg border border-slate-200 shadow-sm hidden flex-1 flex flex-col">
+                    <div class="p-4 border-b border-slate-100">
+                        <div class="flex justify-between items-end mb-1">
+                            <span class="text-xs font-bold text-slate-600">Set S (Unvisited)</span>
+                            <span class="text-xs font-medium bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full" id="stat-s">0</span>
+                        </div>
+                        <div id="list-s" class="text-xs font-mono text-slate-500 bg-slate-50 p-2 rounded border border-slate-100 min-h-[5rem] max-h-48 overflow-y-auto break-words leading-relaxed">
+                            { }
+                        </div>
+                    </div>
+
+                    <div class="p-4">
+                        <div class="flex justify-between items-end mb-1">
+                            <span class="text-xs font-bold text-slate-600">Tour T (Visited)</span>
+                            <span class="text-xs font-medium bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full" id="stat-t">0</span>
+                        </div>
+                        <div id="list-t" class="text-xs font-mono text-indigo-600 bg-indigo-50/30 p-2 rounded border border-indigo-100/50 min-h-[5rem] max-h-48 overflow-y-auto break-words leading-relaxed">
+                            [ ]
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right Panel: Canvas Visualization -->
+        <section class="flex-1 relative bg-slate-100 p-4 flex items-center justify-center overflow-hidden" id="canvas-container">
+            <div class="absolute inset-0 z-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px;"></div>
+            <canvas id="tsp-canvas" class="bg-white rounded-xl shadow-md border border-slate-200 z-10 w-full h-full object-contain cursor-crosshair"></canvas>
+            
+            <!-- Toast Notification -->
+            <div id="toast" class="absolute top-8 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <span id="toast-msg">Tour Complete!</span>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- State Management ---
+        const State = {
+            IDLE: 'IDLE',
+            INIT_S: 'INIT_S',
+            PICK_START: 'PICK_START',
+            REMOVE_START: 'REMOVE_START',
+            CHECK_WHILE: 'CHECK_WHILE',
+            FIND_MIN: 'FIND_MIN',
+            REMOVE_X: 'REMOVE_X',
+            INSERT_X: 'INSERT_X',
+            CONNECT_END: 'CONNECT_END',
+            DONE: 'DONE'
+        };
+
+        let currentState = State.IDLE;
+        let isPlaying = false;
+        let playInterval;
+        
+        let cities = [];
+        let setS = new Set(); // Set of unvisited city indices
+        let tourT = []; // Array of visited city indices
+        
+        let lastSelectedIdx = null; // 'y'
+        let candidateIdx = null;    // 'x'
+        let candidateDist = Infinity;
+        let scanningIndices = []; // Used for visual effect during 4a
+        
+        let totalDistance = 0;
+
+        // --- DOM Elements ---
+        const canvas = document.getElementById('tsp-canvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        const container = document.getElementById('canvas-container');
+        
+        const btnGenerate = document.getElementById('btn-generate');
+        const btnPlay = document.getElementById('btn-play');
+        const btnStep = document.getElementById('btn-step');
+        const inputNumCities = document.getElementById('num-cities');
+        const labelNumCities = document.getElementById('num-cities-val');
+        const inputSpeed = document.getElementById('speed');
+        
+        const labelTourLength = document.getElementById('tour-length');
+        const statS = document.getElementById('stat-s');
+        const statT = document.getElementById('stat-t');
+        const listS = document.getElementById('list-s'); // Added S details element
+        const listT = document.getElementById('list-t'); // Added T details element
+        const statusPanel = document.getElementById('status-panel');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toast-msg');
+
+        // Coordinate System (internal fixed size for consistent distance calculation)
+        const CANVAS_WIDTH = 1000;
+        const CANVAS_HEIGHT = 800;
+        const PADDING = 40;
+
+        // --- Initialization & Setup ---
+        function initCanvas() {
+            canvas.width = CANVAS_WIDTH;
+            canvas.height = CANVAS_HEIGHT;
+            draw();
+        }
+
+        function generateRandomCities(count) {
+            cities = [];
+            for (let i = 0; i < count; i++) {
+                cities.push({
+                    x: PADDING + Math.random() * (CANVAS_WIDTH - 2 * PADDING),
+                    y: PADDING + Math.random() * (CANVAS_HEIGHT - 2 * PADDING),
+                    id: i
+                });
+            }
+        }
+
+        function resetAlgorithm() {
+            pauseAutoPlay();
+            setS.clear();
+            tourT = [];
+            lastSelectedIdx = null;
+            candidateIdx = null;
+            candidateDist = Infinity;
+            scanningIndices = [];
+            totalDistance = 0;
+            
+            currentState = State.INIT_S;
+            updateUI();
+            draw();
+        }
+
+        // --- Core Algorithm Steps ---
+        function calculateDistance(c1, c2) {
+            const dx = c1.x - c2.x;
+            const dy = c1.y - c2.y;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function stepAlgorithm() {
+            if (currentState === State.DONE) return;
+
+            // Clear visual scan lines
+            scanningIndices = [];
+
+            switch (currentState) {
+                case State.INIT_S:
+                    // 1. let S be set of cities...
+                    cities.forEach((_, idx) => setS.add(idx));
+                    currentState = State.PICK_START;
+                    break;
+
+                case State.PICK_START:
+                    // 2. let T be the initial tour of 1 city picked randomly
+                    const randomIdx = Math.floor(Math.random() * cities.length);
+                    tourT.push(randomIdx);
+                    lastSelectedIdx = randomIdx;
+                    currentState = State.REMOVE_START;
+                    break;
+
+                case State.REMOVE_START:
+                    // 3. remove this city from S
+                    setS.delete(lastSelectedIdx);
+                    currentState = State.CHECK_WHILE;
+                    break;
+
+                case State.CHECK_WHILE:
+                    // 4. while there are still cities in S:
+                    if (setS.size > 0) {
+                        currentState = State.FIND_MIN;
+                    } else {
+                        currentState = State.CONNECT_END;
+                    }
+                    break;
+
+                case State.FIND_MIN:
+                    // 4a. find the city x in S with smallest distance to y
+                    candidateIdx = null;
+                    candidateDist = Infinity;
+                    const lastCity = cities[lastSelectedIdx];
+                    
+                    // Visual scanning effect setup
+                    scanningIndices = Array.from(setS);
+
+                    setS.forEach(idx => {
+                        const dist = calculateDistance(lastCity, cities[idx]);
+                        if (dist < candidateDist) {
+                            candidateDist = dist;
+                            candidateIdx = idx;
+                        }
+                    });
+                    currentState = State.REMOVE_X;
+                    break;
+
+                case State.REMOVE_X:
+                    // 4b. remove x from S
+                    setS.delete(candidateIdx);
+                    currentState = State.INSERT_X;
+                    break;
+
+                case State.INSERT_X:
+                    // 4c. insert x into T as the last city
+                    tourT.push(candidateIdx);
+                    totalDistance += candidateDist;
+                    lastSelectedIdx = candidateIdx;
+                    candidateIdx = null; // Clear candidate visual
+                    currentState = State.CHECK_WHILE;
+                    break;
+
+                case State.CONNECT_END:
+                    // Final TSP step: connect last to first
+                    if (tourT.length > 1) {
+                        const firstCity = cities[tourT[0]];
+                        const lastCity = cities[tourT[tourT.length - 1]];
+                        totalDistance += calculateDistance(firstCity, lastCity);
+                    }
+                    currentState = State.DONE;
+                    showToast("Tour Complete!");
+                    pauseAutoPlay();
+                    break;
+            }
+
+            updateUI();
+            draw();
+        }
+
+        // --- Drawing Logic ---
+        function draw() {
+            // Fill background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            // Draw committed tour paths
+            if (tourT.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(cities[tourT[0]].x, cities[tourT[0]].y);
+                for (let i = 1; i < tourT.length; i++) {
+                    ctx.lineTo(cities[tourT[i]].x, cities[tourT[i]].y);
+                }
+                
+                // If done, close the loop
+                if (currentState === State.DONE) {
+                    ctx.lineTo(cities[tourT[0]].x, cities[tourT[0]].y);
+                }
+                
+                ctx.strokeStyle = '#334155'; // slate-700
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+            }
+
+            // Draw scanning lines (Step 4a visualization)
+            if (currentState === State.REMOVE_X && lastSelectedIdx !== null) {
+                const currentCity = cities[lastSelectedIdx];
+                
+                // Draw faint lines to all unvisited
+                ctx.lineWidth = 1;
+                scanningIndices.forEach(idx => {
+                    ctx.beginPath();
+                    ctx.moveTo(currentCity.x, currentCity.y);
+                    ctx.lineTo(cities[idx].x, cities[idx].y);
+                    ctx.strokeStyle = '#cbd5e1'; // slate-300
+                    ctx.stroke();
+                });
+
+                // Highlight the minimum found candidate
+                if (candidateIdx !== null) {
+                    ctx.beginPath();
+                    ctx.moveTo(currentCity.x, currentCity.y);
+                    ctx.lineTo(cities[candidateIdx].x, cities[candidateIdx].y);
+                    ctx.strokeStyle = '#ef4444'; // rose-500
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+
+            // Draw cities (nodes) and their labels
+            const nodeRadius = 16;
+            
+            cities.forEach((city, idx) => {
+                ctx.beginPath();
+                ctx.arc(city.x, city.y, nodeRadius, 0, Math.PI * 2);
+                
+                let textColor = '#ffffff'; // Default to white for colored nodes
+
+                if (tourT[0] === idx) {
+                    // Start city
+                    ctx.fillStyle = '#10b981'; // emerald-500
+                    ctx.strokeStyle = '#047857';
+                    ctx.lineWidth = 2;
+                } else if (idx === lastSelectedIdx && currentState !== State.DONE) {
+                    // Current active city 'y'
+                    ctx.fillStyle = '#f59e0b'; // amber-500
+                    ctx.strokeStyle = '#b45309';
+                    ctx.lineWidth = 2;
+                    // Add a pulse ring
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(city.x, city.y, nodeRadius + 8, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+                    ctx.lineWidth = 4;
+                } else if (idx === candidateIdx) {
+                    // Candidate city 'x'
+                    ctx.fillStyle = '#ef4444'; // rose-500
+                    ctx.strokeStyle = '#b91c1c';
+                    ctx.lineWidth = 2;
+                } else if (tourT.includes(idx)) {
+                    // Visited city
+                    ctx.fillStyle = '#3b82f6'; // blue-500
+                    ctx.strokeStyle = '#1d4ed8';
+                    ctx.lineWidth = 2;
+                } else {
+                    // Unvisited city in S
+                    ctx.fillStyle = '#e2e8f0'; // slate-200
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.lineWidth = 2;
+                    textColor = '#334155'; // Use dark text for light background nodes
+                }
+                
+                ctx.fill();
+                ctx.stroke();
+
+                // Draw Node Label (Index) centered inside the circle
+                ctx.fillStyle = textColor; 
+                ctx.font = 'bold 14px monospace';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(idx, city.x, city.y); 
+            });
+        }
+
+        // --- UI Updates & Controls ---
+        function updateUI() {
+            // Update Stats
+            labelTourLength.innerText = totalDistance.toFixed(0);
+            statusPanel.classList.remove('hidden');
+            statS.innerText = setS.size;
+            statT.innerText = tourT.length;
+
+            // Display actual set contents
+            listS.innerHTML = setS.size > 0 ? `{ ${Array.from(setS).join(', ')} }` : '{ }';
+            listT.innerHTML = tourT.length > 0 ? `[ ${tourT.join(' &rarr; ')} ]` : '[ ]';
+
+            // Update Buttons
+            btnStep.disabled = (currentState === State.DONE || isPlaying);
+            if (btnStep.disabled && !isPlaying) {
+                btnStep.classList.replace('bg-emerald-500', 'bg-slate-300');
+                btnStep.classList.replace('hover:bg-emerald-600', 'hover:bg-slate-300');
+            } else {
+                btnStep.classList.replace('bg-slate-300', 'bg-emerald-500');
+                btnStep.classList.replace('hover:bg-slate-300', 'hover:bg-emerald-600');
+            }
+        }
+
+        function showToast(msg) {
+            toastMsg.innerText = msg;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+            }, 3000);
+        }
+
+        // --- Auto Play Logic ---
+        function getSpeedDelay() {
+            const val = parseInt(inputSpeed.value); // 1 to 10
+            // Map 1->1500ms, 10->50ms
+            return 1500 - ((val - 1) * 160); 
+        }
+
+        function toggleAutoPlay() {
+            if (currentState === State.DONE) {
+                resetAlgorithm();
+            }
+
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                btnPlay.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pause`;
+                btnPlay.classList.replace('bg-indigo-600', 'bg-rose-500');
+                btnPlay.classList.replace('hover:bg-indigo-700', 'hover:bg-rose-600');
+                executePlayStep();
+            } else {
+                pauseAutoPlay();
+            }
+            updateUI();
+        }
+
+        function pauseAutoPlay() {
+            isPlaying = false;
+            clearTimeout(playInterval);
+            btnPlay.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Auto Play`;
+            btnPlay.classList.replace('bg-rose-500', 'bg-indigo-600');
+            btnPlay.classList.replace('hover:bg-rose-600', 'hover:bg-indigo-700');
+            updateUI();
+        }
+
+        function executePlayStep() {
+            if (!isPlaying) return;
+            
+            stepAlgorithm();
+            
+            if (currentState !== State.DONE) {
+                playInterval = setTimeout(executePlayStep, getSpeedDelay());
+            } else {
+                pauseAutoPlay();
+            }
+        }
+
+        // --- Event Listeners ---
+        btnGenerate.addEventListener('click', () => {
+            generateRandomCities(parseInt(inputNumCities.value));
+            resetAlgorithm();
+        });
+
+        btnStep.addEventListener('click', stepAlgorithm);
+        btnPlay.addEventListener('click', toggleAutoPlay);
+
+        inputNumCities.addEventListener('input', (e) => {
+            labelNumCities.innerText = e.target.value;
+        });
+
+        // Initialize
+        initCanvas();
+        generateRandomCities(parseInt(inputNumCities.value));
+        resetAlgorithm();
+
+        // Handle resizing minimally to prevent skew (canvas keeps internal resolution, CSS scales it)
+    </script>
+</body>
+</html>
